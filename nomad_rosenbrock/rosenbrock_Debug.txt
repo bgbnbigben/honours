@@ -1,0 +1,1189 @@
+TRUTH: Begin Initial Points
+   ---------------------------
+   evalPointSet:  type = 0
+   evalPointSet:  x =
+      0.92084
+     -0.64923
+   evalPointSet:  f = 224.1609
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Initial Points
+ 
+TRUTH:    Mesh size = 1
+TRUTH: Begin Search 1
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99933
+     0.99866
+   evalPointSet:  f = 4.4795e-07
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 1
+TRUTH:    Success = 1
+ 
+TRUTH:    Mesh size = 1
+TRUTH: Begin Search 2
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0006
+     1.0012
+   evalPointSet:  f = 4.7866e-07
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 2
+TRUTH: Begin Poll 2
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.9993
+     0.99866
+   evalPointSet:  f = 900.2033
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99933
+      1.4987
+   evalPointSet:  f = 24.9994
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     -0.00066615
+         0.99866
+   evalPointSet:  f = 100.7338
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99933
+     0.49866
+   evalPointSet:  f = 25.0006
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 2
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.5
+TRUTH: Begin Search 3
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0003
+     1.0006
+   evalPointSet:  f = 1.4758e-07
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 3
+TRUTH:    Success = 1
+ 
+TRUTH:    Mesh size = 0.5
+TRUTH: Begin Search 4
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0002
+     1.0004
+   evalPointSet:  f = 3.9845e-08
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 4
+TRUTH:    Success = 1
+ 
+TRUTH:    Mesh size = 0.5
+TRUTH: Begin Search 5
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99917
+     0.99846
+   evalPointSet:  f = 1.9723e-06
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 5
+TRUTH: Begin Poll 5
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.5002
+     1.0004
+   evalPointSet:  f = 156.54
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.2504
+   evalPointSet:  f = 6.2505
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.50017
+      1.0004
+   evalPointSet:  f = 56.5269
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.0002
+     0.75035
+   evalPointSet:  f = 6.2495
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 5
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.25
+TRUTH: Begin Search 6
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+          1
+     1.0001
+   evalPointSet:  f = 1.3046e-07
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 6
+TRUTH: Begin Poll 6
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.2502
+     1.0004
+   evalPointSet:  f = 31.7116
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.1254
+   evalPointSet:  f = 1.5628
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.75017
+      1.0004
+   evalPointSet:  f = 19.2114
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.0002
+     0.87535
+   evalPointSet:  f = 1.5622
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 6
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.125
+TRUTH: Begin Search 7
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0003
+     1.0006
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 7
+TRUTH: Begin Poll 7
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.1252
+     1.0004
+   evalPointSet:  f = 7.073
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0629
+   evalPointSet:  f = 0.39076
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.87517
+      1.0004
+   evalPointSet:  f = 5.5112
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.0002
+     0.93785
+   evalPointSet:  f = 0.39049
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 7
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.0625
+TRUTH: Begin Search 8
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0001
+     1.0001
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 8
+TRUTH: Begin Poll 8
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0627
+     1.0004
+   evalPointSet:  f = 1.6659
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0316
+   evalPointSet:  f = 0.097722
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.93767
+      1.0004
+   evalPointSet:  f = 1.471
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     0.9691
+   evalPointSet:  f = 0.097591
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 8
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.03125
+TRUTH: Begin Search 9
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99979
+     0.99959
+   evalPointSet:  f = 6.6941e-08
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 9
+TRUTH: Begin Poll 9
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0314
+     1.0004
+   evalPointSet:  f = 0.40392
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+      1.016
+   evalPointSet:  f = 0.024447
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.96892
+      1.0004
+   evalPointSet:  f = 0.37974
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.0002
+     0.98473
+   evalPointSet:  f = 0.024381
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 9
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.015625
+TRUTH: Begin Search 10
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0001
+     1.0002
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 10
+TRUTH: Begin Poll 10
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0158
+     1.0004
+   evalPointSet:  f = 0.099405
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0082
+   evalPointSet:  f = 0.0061199
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.98454
+      1.0004
+   evalPointSet:  f = 0.096473
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.0002
+     0.99254
+   evalPointSet:  f = 0.0060872
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 10
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.0078125
+TRUTH: Begin Search 11
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0001
+     1.0002
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 11
+TRUTH: Begin Poll 11
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.008
+     1.0004
+   evalPointSet:  f = 0.024644
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0043
+   evalPointSet:  f = 0.0015341
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99236
+      1.0004
+   evalPointSet:  f = 0.024323
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.0002
+     0.99644
+   evalPointSet:  f = 0.0015177
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 11
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.00390625
+TRUTH: Begin Search 12
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0001
+     1.0002
+   evalPointSet:  f = 9.6784e-08
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 12
+TRUTH: Begin Poll 12
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0041
+     1.0004
+   evalPointSet:  f = 0.0061297
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0023
+   evalPointSet:  f = 0.00038561
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99626
+      1.0004
+   evalPointSet:  f = 0.0061121
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     0.9984
+   evalPointSet:  f = 0.00037741
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 12
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.001953125
+TRUTH: Begin Search 13
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0001
+     1.0002
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 13
+TRUTH: Begin Poll 13
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0021
+     1.0004
+   evalPointSet:  f = 0.0015257
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0013
+   evalPointSet:  f = 9.7456e-05
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99822
+      1.0004
+   evalPointSet:  f = 0.0015348
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.0002
+     0.99937
+   evalPointSet:  f = 9.3359e-05
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 13
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.0009765625
+TRUTH: Begin Search 14
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99971
+     0.99942
+   evalPointSet:  f = 8.2584e-08
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 14
+TRUTH: Begin Poll 14
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0011
+     1.0004
+   evalPointSet:  f = 0.0003792
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0008
+   evalPointSet:  f = 2.4906e-05
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99919
+      1.0004
+   evalPointSet:  f = 0.00038598
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.0002
+     0.99986
+   evalPointSet:  f = 2.2858e-05
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 14
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.00048828125
+TRUTH: Begin Search 15
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0001
+     1.0002
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 15
+TRUTH: Begin Poll 15
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0007
+     1.0004
+   evalPointSet:  f = 9.3841e-05
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0006
+   evalPointSet:  f = 6.5124e-06
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99968
+      1.0004
+   evalPointSet:  f = 9.7514e-05
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0001
+   evalPointSet:  f = 5.4882e-06
+   ---------------------------
+   Points identified/evaluated: 4 / 4
+TRUTH: End Poll 15
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.00024414062
+TRUTH: Begin Search 16
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1.0001
+     1.0002
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 16
+TRUTH: Begin Poll 16
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0004
+     1.0004
+   evalPointSet:  f = 2.3014e-05
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0005
+   evalPointSet:  f = 1.786e-06
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99993
+      1.0004
+   evalPointSet:  f = 2.4885e-05
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     1.0002
+     1.0002
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 3
+TRUTH: End Poll 16
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 0.00012207031
+TRUTH: Begin Search 17
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99985
+     0.99971
+   evalPointSet:  f = 2.8798e-08
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 17
+TRUTH:    Success = 1
+ 
+TRUTH:    Mesh size = 0.00012207031
+TRUTH: Begin Search 18
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet:  f = 1.2217e-09
+   ---------------------------
+   Points identified/evaluated: 1 / 1
+TRUTH: End Search 18
+TRUTH:    Success = 1
+ 
+TRUTH:    Mesh size = 0.00012207031
+TRUTH: Begin Search 19
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99995
+     0.99989
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 19
+TRUTH: Begin Poll 19
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+      1.0001
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+           1
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99986
+     0.99995
+   evalPointSet:  f = 5.8502e-06
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99989
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 1
+TRUTH: End Poll 19
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 6.1035156e-05
+TRUTH: Begin Search 20
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99998
+     0.99996
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 20
+TRUTH: Begin Poll 20
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+           1
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99998
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99992
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99992
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 20
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 3.0517578e-05
+TRUTH: Begin Search 21
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99999
+     0.99997
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 21
+TRUTH: Begin Poll 21
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+           1
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99997
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99995
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99994
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 21
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 1.5258789e-05
+TRUTH: Begin Search 22
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+           1
+     0.99999
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 22
+TRUTH: Begin Poll 22
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99999
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99996
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99996
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99994
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 22
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 7.6293945e-06
+TRUTH: Begin Search 23
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99998
+     0.99997
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 23
+TRUTH: Begin Poll 23
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99999
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99996
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99997
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 23
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 3.8146973e-06
+TRUTH: Begin Search 24
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99999
+     0.99997
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 24
+TRUTH: Begin Poll 24
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99997
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 24
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 1.9073486e-06
+TRUTH: Begin Search 25
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     0.99999
+     0.99998
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 25
+TRUTH: Begin Poll 25
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 25
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 9.5367432e-07
+TRUTH: Begin Search 26
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+           1
+     0.99999
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 26
+TRUTH: Begin Poll 26
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 26
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 4.7683716e-07
+TRUTH: Begin Search 27
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1
+     1
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 27
+TRUTH: Begin Poll 27
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 27
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 2.3841858e-07
+TRUTH: Begin Search 28
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1
+     1
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 28
+TRUTH: Begin Poll 28
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 28
+TRUTH:    Success = 0
+ 
+TRUTH:    Mesh size = 1.1920929e-07
+TRUTH: Begin Search 29
+   Search type: PS
+   # Points:    1
+   ---------------------------
+   evalPointSet:  type = S
+   evalPointSet:  x =
+     1
+     1
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 1 / 0
+TRUTH: End Search 29
+TRUTH: Begin Poll 29
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   ---------------------------
+   evalPointSet:  type = P
+   evalPointSet:  x =
+     0.99998
+     0.99995
+   evalPointSet: *** Cache hit ***
+   ---------------------------
+   Points identified/evaluated: 4 / 0
+TRUTH: End Poll 29
+TRUTH:    Success = 0
