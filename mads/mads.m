@@ -1848,88 +1848,87 @@ Defaults.vTol          = 1e-4;
 Defaults.nPoints       = 1;
 
 if nargin < 3
-   Options = Defaults;
+    Options = Defaults;
 else
-   fnames = fieldnames(Defaults);
-   for k = 1:length(fnames)
-      if ~isfield(Options, fnames{k})
-         Options.(fnames{k}) = Defaults.(fnames{k});
-      end
-   end
+    fnames = fieldnames(Defaults);
+    for k = 1:length(fnames)
+        if ~isfield(Options, fnames{k})
+            Options.(fnames{k}) = Defaults.(fnames{k});
+        end
+    end
 end
 
+% Keep the partical swarm persistent over function calls
 persistent PS;
-%Retrieve pre-existing particle swarm, if available
-%if isappdata(0,'PS')
-%   PS = getappdata(0,'PS');
-%end
 
 %Initialize particle positions and velocities
 n  = size(B,1);
-%if isappdata(0,'PS') && size(PS.xBest,1) == n
 if ~isempty(PS)
-   x     = PS.x;
-   v     = PS.v;
-   xBest = PS.xBest;
-   fBest = PS.fBest;
+    x     = PS.x;
+    v     = PS.v;
+    xBest = PS.xBest;
+    fBest = PS.fBest;
 else
-   x = zeros(n,Options.nParticles);
-   v = zeros(n,Options.nParticles);
-   for k = 1:Options.nParticles
-      x(:,k) = B(:,1) + (B(:,2) - B(:,1)).*rand(n,1);
-      v(:,k) = rand(n,1);
-   end
-   nans = isnan(x);
-   x(nans) = -40 * ones(size(x(nans))) + 80 * rand(size(x(nans)));
-   xBest = x;
-   fBest = Inf*ones(Options.nParticles,1);
+    x = zeros(n,Options.nParticles);
+    v = zeros(n,Options.nParticles);
+    first = B(:, 1);
+    second = B(:, 2);
+    parfor k = 1:Options.nParticles
+        x(:,k) = first + (second - first) .* rand(n, 1);
+        v(:,k) = rand(n,1);
+    end
+    nans = isnan(x);
+    x(nans) = -40 * ones(size(x(nans))) + 80 * rand(size(x(nans)));
+    xBest = x;
+    fBest = Inf*ones(Options.nParticles,1);
 end
 
 for i = 1:Options.maxIterations
-   fx = zeros(1,Options.nParticles);
-   for k = 1:Options.nParticles
-
-      % Enforce bound constraints
-      ind = find(x(:,k) < B(:,1));
-      x(ind,k) = B(ind,1);
-      ind = find(x(:,k) > B(:,2));
-      x(ind,k) = B(ind,2);
-
-      % Evaluate objective function at a particle position
-      switch nargin(f)
-      case {1}
-         fx(k) = feval(f,x(:,k));
-      case{2}
-         fx(k) = feval(f,x(:,k),p);
-      otherwise
-         error('PS:FuncEval','Invalid number of input arguments');
-      end
-
-      % Store best particle position and function value
-      if fx(k) < fBest(k)
-         fBest(k)   = fx(k);
-         xBest(:,k) = x(:,k);
-      end
-   end
-
-   % Get best global solution
-   [fBestG,iBestG] = sort(fx);
-   xBestG          = x(:,iBestG);
-
-   % Update particle positions and velocities
-   vnorm = zeros(1,Options.nParticles);
-   for k = 1:Options.nParticles
-      xCurrent = x(:,k);
-      v(:,k)   = .73 * (v(:,k) + Options.c(1)*rand*(xBest(:,k)  - xCurrent) ...
-                        + Options.c(2)*rand*(xBestG(:,1) - xCurrent));
-      x(:,k)   = xCurrent + v(:,k);
-      vnorm(k) = norm(v);
-   end
-
-   % Termination test
-   if max(vnorm) < Options.vTol
-      break
-   end
+    fx = zeros(1, Options.nParticles);
+    
+    for k = 1:Options.nParticles
+        % Enforce bound constraints
+        ind = find(x(:, k) < B(:, 1));
+        x(ind, k) = B(ind, 1);
+        ind = find(x(:, k) > B(:, 2));
+        x(ind, k) = B(ind, 2);
+        % Evaluate objective function at a particle position
+        switch nargin(f)
+            case {1}
+                fx(k) = feval(f, x(:, k));
+            case {2}
+                fx(k) = feval(f, x(:, k), p);
+            otherwise
+                error('PS:FuncEval','Invalid number of input arguments');
+        end
+        
+        % Store best particle position and function value
+        if fx(k) < fBest(k)
+            fBest(k)    = fx(k);
+            xBest(:, k) = x(:, k);
+        end
+    end
+    
+    % Get best global solution
+    [fBestG,iBestG] = sort(fx);
+    xBestG          = x(:, iBestG);
+    globalBest      = xBestG(:, 1);
+    
+    % Update particle positions and velocities
+    vnorm = zeros(1, Options.nParticles);
+    for k = 1:Options.nParticles
+        xCurrent = x(:, k);
+        v(:, k)  = .73 * (v(:, k)...
+                   + Options.c(1) * rand * (xBest(:, k) - xCurrent)...
+                   + Options.c(2) * rand * (globalBest  - xCurrent));
+        x(:, k)  = xCurrent + v(:, k);
+        vnorm(k) = norm(v);
+    end
+    
+    % Termination test
+    if max(vnorm) < Options.vTol
+        break
+    end
 end
 
 % Store PS data
@@ -1937,7 +1936,6 @@ PS.x     = x;
 PS.v     = v;
 PS.xBest = xBest;
 PS.fBest = fBest;
-setappdata(0,'PS',PS);
 
 % Return the best nPoints solutions found
 nPoints  = min(Options.nPoints,Options.nParticles);
