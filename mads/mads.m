@@ -1838,7 +1838,7 @@ return
 %  xCurrent         = temporary storage of a single particle position
 %  vnorm            = vector of velocity norms for each particle
 %*******************************************************************************
-function [xBestG,fBestG,termflag] = ps(f,B,p,Options)
+function [xBestG,fBestG,termflag] = ps(f, B, xBestG, Options)
 
 % Set options and defaults
 Defaults.maxIterations = 1000;
@@ -1846,6 +1846,8 @@ Defaults.nParticles    = 50;
 Defaults.c             = [1.3,1.3];
 Defaults.vTol          = 1e-4;
 Defaults.nPoints       = 1;
+% Keep the partical swarm persistent over function calls
+persistent PS;
 
 if nargin < 3
     Options = Defaults;
@@ -1857,91 +1859,185 @@ else
         end
     end
 end
+climber = 1;
+c1 = Options.c(1);
+c2 = Options.c(2);
+w = 0.73;
+popul = Options.nParticles;
+iterations = Options.maxIterations;
+HybridIter = 10; % random constant
+vTol = Options.vTol;
 
-% Keep the partical swarm persistent over function calls
-persistent PS;
+if climber
+    % Define the Options for the hybrid approach
+    Options = optimset('LargeScale','off',...
+                       'Display','off',...
+                       'MaxIter', HybridIter);
 
-%Initialize particle positions and velocities
-n  = size(B,1);
-if ~isempty(PS)
-    x     = PS.x;
-    v     = PS.v;
-    xBest = PS.xBest;
-    fBest = PS.fBest;
-else
-    x = zeros(n,Options.nParticles);
-    v = zeros(n,Options.nParticles);
-    first = B(:, 1);
-    second = B(:, 2);
-    parfor k = 1:Options.nParticles
-        x(:,k) = first + (second - first) .* rand(n, 1);
-        v(:,k) = rand(n,1);
-    end
+    % Initial population (random start)
+    x = ones(popul, 1) * B(:, 1)'...
+        + rand(popul, size(B, 1)).*(ones(popul, 1)*(B(:, 2)-B(:, 1))');
     nans = isnan(x);
     x(nans) = -40 * ones(size(x(nans))) + 80 * rand(size(x(nans)));
-    xBest = x;
-    fBest = Inf*ones(Options.nParticles,1);
-end
+    % Hill climb of each solution (bee)
+    parfor i = 1:popul * sign(HybridIter)
+        [x(i, :), fxi(i, 1)] = fminsearch(f, x(i, :)', Options);
+    end
+    x = max(min(x, ones(popul, 1) * B(:, 2)'), ones(popul, 1) * B(:, 1)');
+    parfor i = 1:length(x)
+        fxi(i) = feval(f, x(i, :)');
+    end
 
-for i = 1:Options.maxIterations
-    fx = zeros(1, Options.nParticles);
-    
-    for k = 1:Options.nParticles
-        % Enforce bound constraints
-        ind = find(x(:, k) < B(:, 1));
-        x(ind, k) = B(ind, 1);
-        ind = find(x(:, k) > B(:, 2));
-        x(ind, k) = B(ind, 2);
-        % Evaluate objective function at a particle position
-        switch nargin(f)
-            case {1}
-                fx(k) = feval(f, x(:, k));
-            case {2}
-                fx(k) = feval(f, x(:, k), p);
-            otherwise
-                error('PS:FuncEval','Invalid number of input arguments');
+    % Local minima
+    xBestG = x;
+    fBest = fxi;
+
+    % Initialize the velocities
+    v = zeros(popul, size(B, 1));
+
+    % Isolate the best solution
+    [Y, I] = min(fxi);
+    xBest(1, :) = [Y, x(I, :)];
+    P = ones(popul, 1) * x(I, :);
+
+    % For each flight
+    for i = 2:iterations
+        % Estimate the velocities
+        v = v * w + c1 * rand(popul, size(B, 1)) .* (xBestG - x)...
+            + c2 * rand(popul, size(B, 1)) .* (P - x);
+
+        % Add the velocities to the population 
+        x = x + v;
+
+        % Drag the particles into the search B
+        x = max(min(x, ones(popul, 1) * B(:, 2)'),...
+            ones(popul, 1) * B(:, 1)');
+
+        % Hill climb search for the new population
+        pnew = xBestG;
+        fxipnew = fBest;
+        parfor j = 1:popul * sign(HybridIter)
+            [x(j, :), fxi(j, 1)] = fminsearch(f, x(j, :)', Options);
+            [pnew(j, :), fxipnew(j, 1)] = fminsearch(f, xBestG(j, :)', Options);
         end
-        
-        % Store best particle position and function value
-        if fx(k) < fBest(k)
-            fBest(k)    = fx(k);
-            xBest(:, k) = x(:, k);
+        x = max(min(x, ones(popul, 1) * B(:, 2)'),...
+                  ones(popul, 1) * B(:, 1)');
+        pnew = max(min(pnew, ones(popul, 1) * B(:, 2)'),...
+                   ones(popul, 1) * B(:, 1)');
+
+        parfor j = 1:length(x)
+            fxi(j) = feval(f, x(j, :)');
+            fxipnew(j) = feval(f, pnew(j, :)');
+        end
+
+        % Min(fxi, fxip)
+        s = find(fxi < fBest);
+        xBestG(s, :) = x(s, :);
+        fBest(s) = fxi(s);
+
+        % Min(fxipnew, fxip);
+        s = find(fxipnew < fBest);
+        xBestG(s, :) = pnew(s, :);
+        fBest(s) = fxipnew(s);
+
+        % Isolate the best solution
+        [Y, I] = min(fBest);
+        xBest(i, :) = [Y, xBestG(I, :)];
+        P = ones(popul, 1) * xBestG(I, :);
+    end
+
+    % Get the point that correspond to the minimum of the function
+    xBestG = xBest(end, 2:end)';
+
+    % Get the minimum of the function
+    fBestG = xBest(end, 1);
+
+    % Set this to 1 and it terminates after this algorithm. Probably want to 
+    % work out a good condition for this....
+    termflag = 0;
+else
+    %Initialize particle positions and velocities
+    n  = size(B,1);
+    %if ~isempty(PS)
+    %    x     = PS.x;
+    %    v     = PS.v;
+    %    xBest = PS.xBest;
+    %    fBest = PS.fBest;
+    %else
+        x = zeros(n, popul);
+        v = zeros(n, popul);
+        first = B(:, 1);
+        second = B(:, 2);
+        parfor k = 1:popul
+            x(:,k) = first + (second - first) .* rand(n, 1);
+            v(:,k) = rand(n,1);
+        end
+        nans = isnan(x);
+        x(nans) = -40 * ones(size(x(nans))) + 80 * rand(size(x(nans)));
+        xBest = x;
+        fBest = Inf*ones(popul, 1);
+    %end
+
+    for i = 1:iterations
+        fx = zeros(1, popul);
+
+        for k = 1:popul
+            % Enforce bound constraints
+            ind = find(x(:, k) < B(:, 1));
+            x(ind, k) = B(ind, 1);
+            ind = find(x(:, k) > B(:, 2));
+            x(ind, k) = B(ind, 2);
+            % Evaluate objective function at a particle position
+            switch nargin(f)
+                case {1}
+                    fx(k) = feval(f, x(:, k));
+                case {2}
+                    fx(k) = feval(f, x(:, k), xBestG);
+                otherwise
+                    error('PS:FuncEval','Invalid number of input arguments');
+            end
+
+            % Store best particle position and function value
+            if fx(k) < fBest(k)
+                fBest(k)    = fx(k);
+                xBest(:, k) = x(:, k);
+            end
+        end
+
+        % Get best global solution
+        [fBestG,iBestG] = sort(fx);
+        xBestG          = x(:, iBestG);
+        globalBest      = xBestG(:, 1);
+
+        % Update particle positions and velocities
+        vnorm = zeros(1, popul);
+        for k = 1:popul
+            xCurrent = x(:, k);
+            v(:, k)  = w * v(:, k)...
+                       + c1 * rand * (xBest(:, k) - xCurrent)...
+                       + c2 * rand * (globalBest  - xCurrent);
+            x(:, k)  = xCurrent + v(:, k);
+            vnorm(k) = norm(v);
+        end
+
+        % Termination test
+        if max(vnorm) < vTol
+            break
         end
     end
-    
-    % Get best global solution
-    [fBestG,iBestG] = sort(fx);
-    xBestG          = x(:, iBestG);
-    globalBest      = xBestG(:, 1);
-    
-    % Update particle positions and velocities
-    vnorm = zeros(1, Options.nParticles);
-    for k = 1:Options.nParticles
-        xCurrent = x(:, k);
-        v(:, k)  = .73 * (v(:, k)...
-                   + Options.c(1) * rand * (xBest(:, k) - xCurrent)...
-                   + Options.c(2) * rand * (globalBest  - xCurrent));
-        x(:, k)  = xCurrent + v(:, k);
-        vnorm(k) = norm(v);
-    end
-    
-    % Termination test
-    if max(vnorm) < Options.vTol
-        break
-    end
+
+    % Store PS data
+    PS.x     = x;
+    PS.v     = v;
+    PS.xBest = xBest;
+    PS.fBest = fBest;
+
+    % Return the best nPoints solutions found
+    nPoints  = min(Options.nPoints, popul);
+    xBestG   = xBestG(:, 1:nPoints);
+    fBestG   = fBestG(1:nPoints);
+    termflag = max(vnorm) < Options.vTol
 end
-
-% Store PS data
-PS.x     = x;
-PS.v     = v;
-PS.xBest = xBest;
-PS.fBest = fBest;
-
-% Return the best nPoints solutions found
-nPoints  = min(Options.nPoints,Options.nParticles);
-xBestG   = xBestG(:,1:nPoints);
-fBestG   = fBestG(1:nPoints);
-termflag = max(vnorm) < Options.vTol;
 return
 
 %*******************************************************************************
