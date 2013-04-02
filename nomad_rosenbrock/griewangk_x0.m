@@ -1,4 +1,8 @@
 function iterate0 = griewangk_x0;
-    win = -20.5;
-    iterate0.x = [-win/4-win*rand/2;win/4+win*rand/2];
+    win = -50.5;
+    iterate0.x = [-30 + .1 * rand * 60;-30 + .1 * rand * 60; 
+                  -30 + .1 * rand * 60;-30 + .1 * rand * 60;
+                  -30 + .1 * rand * 60;-30 + .1 * rand * 60;
+                  -30 + .1 * rand * 60;-30 + .1 * rand * 60; 
+                  -30 + .1 * rand * 60;-30 + .1 * rand * 60;];
     iterate0.p = [];
