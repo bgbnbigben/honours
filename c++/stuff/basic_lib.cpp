@@ -1,98 +1,113 @@
-/*-----------------------------------------------------*/
-/*  how to use the NOMAD library with a user function  */
-/*-----------------------------------------------------*/
-#include "nomad.hpp"
+#include "../nomad.3.5.1/src/nomad.hpp"
+#include "optionparser.h"
+#include "default_eval.h"
+#include <cmath>
+#include <string>
+#include <algorithm>
 using namespace std;
-// using namespace NOMAD; avoids putting NOMAD:: everywhere
 
-/*----------------------------------------*/
-/*               The problem              */
-/*----------------------------------------*/
-class My_Evaluator : public NOMAD::Evaluator {
-public:
-  My_Evaluator  ( const NOMAD::Parameters & p ) :
-    NOMAD::Evaluator ( p ) {}
+const int NUM_VARIABLES = 5;
+const int NUM_ITERATIONS = 10000;
 
-  ~My_Evaluator ( void ) {}
 
-  bool eval_x ( NOMAD::Eval_Point   & x          ,
-		const NOMAD::Double & h_max      ,
-		bool                & count_eval   ) const {
+struct Arg: public option::Arg
+{
+  static option::ArgStatus NonEmpty(const option::Option& option, bool msg)
+  {
+    if (option.arg != 0 && option.arg[0] != 0)
+      return option::ARG_OK;
 
-    NOMAD::Double c1 = 0.0 , c2 = 0.0;
-    for ( int i = 0 ; i < 5 ; i++ ) {
-      c1 += (x[i]-1).pow2();
-      c2 += (x[i]+1).pow2();
+    if (msg) {
+        fprintf(stderr, "Option '");
+        fwrite(option.name, option.namelen, 1, stderr);
+        fprintf(stderr, "' requires a non-empty argument\n");
     }
-    x.set_bb_output  ( 0 , x[4]  ); // objective value
-    x.set_bb_output  ( 1 , c1-25 ); // constraint 1
-    x.set_bb_output  ( 2 , 25-c2 ); // constraint 2
-
-    count_eval = true; // count a black-box evaluation
-
-    return true;       // the evaluation succeeded
+    return option::ARG_ILLEGAL;
   }
 };
 
-/*------------------------------------------*/
-/*            NOMAD main function           */
-/*------------------------------------------*/
-int main ( int argc , char ** argv ) {
+enum optionIndex {PROB_TYPE};
+const option::Descriptor usage[] = {
+    {PROB_TYPE, 0, "p", "problem", Arg::NonEmpty,
+        "  -p <name>, \t--problem=<name>. Defaults to Griewangk."},
+    {0, 0, 0, 0, 0, 0}
+};
 
-  // display:
-  NOMAD::Display out ( std::cout );
-  out.precision ( NOMAD::DISPLAY_PRECISION_STD );
+class Griewangk : public NOMAD::Evaluator {
+    public:
+        Griewangk (const NOMAD::Parameters &p) : NOMAD::Evaluator(p) {}
 
-  try {
+        /* Attempt to optimise
+         * f(x) = sum(x^2) / 4000 - prod(cos(x / sqrt(n))) + 1
+         */
+        bool eval_x (NOMAD::Eval_Point &x, const NOMAD::Double &h_max,
+                     bool &count_eval) const {
 
-    // NOMAD initializations:
-    NOMAD::begin ( argc , argv );
+            const int dimension = this->_p.get_dimension();
+            // TODO do this better
+            NOMAD::Double prod(1.0);
+            for (int i = 0; i < dimension; i++) {
+                prod *= cos((x[i] / sqrt(dimension)).value());
+            }
 
-    // parameters creation:
-    NOMAD::Parameters p ( out );
+            x.set_bb_output(0, x.dot_product(x) / 4000.0 - prod + 1.0);
+            count_eval = true;
+            return true;
+        }
+};
 
-    p.set_DIMENSION (5);             // number of variables
+int main (int argc, char** argv) {
+    option::Stats  stats(usage, argc-1, argv+1);
+    option::Option* options = new option::Option[stats.options_max];
+    option::Option* buffer  = new option::Option[stats.buffer_max];
+    option::Parser parse(usage, argc-1, argv+1, options, buffer);
 
-    vector<NOMAD::bb_output_type> bbot (3); // definition of
-    bbot[0] = NOMAD::OBJ;                   // output types
-    bbot[1] = NOMAD::PB;
-    bbot[2] = NOMAD::EB;
-    p.set_BB_OUTPUT_TYPE ( bbot );
+    NOMAD::Display out(std::cout);
+    out.precision(NOMAD::DISPLAY_PRECISION_STD);
+    NOMAD::Evaluator *my_eval;
 
-    p.set_DISPLAY_STATS ( "bbe ( sol ) obj" );
+    try {
+        NOMAD::begin(argc, argv);
+        NOMAD::Parameters p(out);
 
-    // p.set_DISPLAY_DEGREE ( FULL_DISPLAY );
+        p.set_DISPLAY_STATS("bbe ( sol ) obj");
+        //p.set_DISPLAY_DEGREE(FULL_DISPLAY);
+        p.set_DIMENSION(NUM_VARIABLES);
+        p.set_MAX_BB_EVAL(NUM_ITERATIONS);
+        // p.set_TMP_DIR("/tmp"); // Defaults to pwd
 
-    p.set_X0 ( NOMAD::Point ( 5 , 0.0 ) );  // starting point
+        vector<NOMAD::bb_output_type> bbot(3);  // definition of
+        bbot[0] = NOMAD::OBJ;                   // output types
+        bbot[1] = NOMAD::PB;
+        bbot[2] = NOMAD::EB;
+        p.set_BB_OUTPUT_TYPE(bbot);
 
-    p.set_LOWER_BOUND ( NOMAD::Point ( 5 , -6.0 ) ); // all var. >= -6
-    NOMAD::Point ub ( 5 );                    // x_4 and x_5 have no bounds
-    ub[0] = 5.0;                              // x_1 <= 5
-    ub[1] = 6.0;                              // x_2 <= 6
-    ub[2] = 7.0;                              // x_3 <= 7
-    p.set_UPPER_BOUND ( ub );
+        p.set_X0(NOMAD::Point(NUM_VARIABLES, 0.4));  // starting point
 
-    p.set_MAX_BB_EVAL (100);     // the algorithm terminates after
-                                 // 100 black-box evaluations
+        p.set_LOWER_BOUND(NOMAD::Point(NUM_VARIABLES, -6.0)); // all var. >= -6
+        NOMAD::Point ub(NUM_VARIABLES);                    // x_4 and x_5 have no bounds
+        ub[0] = 5.0;                              // x_1 <= 5
+        ub[1] = 6.0;                              // x_2 <= 6
+        ub[2] = 7.0;                              // x_3 <= 7
+        p.set_UPPER_BOUND(ub);
 
-    // p.set_TMP_DIR ("/tmp");   // directory for temporary files
+        p.check();
+        
+        string data(options[PROB_TYPE].arg?options[PROB_TYPE].arg:"");
+        transform(data.begin(), data.end(), data.begin(), ::tolower);
+        if (!data.compare("default")) {
+            my_eval = new My_Evaluator(p);
+        } else {
+            my_eval = new Griewangk(p);
+        }
+        NOMAD::Mads mads(p, my_eval);
+        mads.run();
+    } catch (exception &e) {
+        cerr << "\nNOMAD has been interrupted(" << e.what() << ")\n\n";
+    }
 
-    // parameters validation:
-    p.check();
+    NOMAD::Slave::stop_slaves(out);
+    NOMAD::end();
 
-    // custom evaluator creation:
-    My_Evaluator ev   ( p );
-
-    // algorithm creation and execution:
-    NOMAD::Mads mads ( p , &ev );
-    mads.run();
-  }
-  catch ( exception & e ) {
-    cerr << "\nNOMAD has been interrupted (" << e.what() << ")\n\n";
-  }
-
-  NOMAD::Slave::stop_slaves ( out );
-  NOMAD::end();
-
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }

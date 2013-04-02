@@ -8,14 +8,14 @@ endif
 COMPILATOR_OPTIONS 	= -O3 -std=c++0x -DUSE_MPI
 L1 					= $(NOMAD_HOME)/lib/nomad.MPI.a
 LIBS 				= $(L1) -lm -lmpi
-OBJS 				= basic_lib_MPI.o
+OBJS 				= basic_lib_MPI.o default_eval.o
 else
 EXE                 = basic_lib.exe
 COMPILATOR          = g++
 COMPILATOR_OPTIONS  = -O3 -std=c++0x
 L1                  = $(NOMAD_HOME)/lib/nomad.a
 LIBS                = $(L1) -lm
-OBJS                = basic_lib.o
+OBJS                = basic_lib.o default_eval.o
 endif
 
 INCLUDE             = -I$(NOMAD_HOME)/src -I.
@@ -34,7 +34,10 @@ $(EXE): check_env $(L1) $(OBJS)
 	$(COMPILATOR) $(OBJS) $(LIBS) $(COMPILATOR_OPTIONS) -o $(EXE)
 	strip $(EXE)
 
-%.o: basic_lib.cpp
+basic_lib_MPI.o: basic_lib.cpp
+	$(COMPILE) -o $@ $<
+
+%.o: %.cpp
 	$(COMPILE) -o $@ $<
 
 check_env:
