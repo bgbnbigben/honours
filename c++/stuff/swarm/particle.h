@@ -8,7 +8,6 @@ class Particle {
         double leftWindow_;
         double rightWindow_;
 
-        double getRandomInWindow_();
         double cost_;
 
     public:
@@ -22,6 +21,7 @@ class Particle {
         }
         inline const double getVal() const { return this->cost_; }
         inline const std::vector<double>& pos() { return this->position_; }
+        static constexpr double mutation_prob = 0.2;
 
 };
 
