@@ -1,4 +1,5 @@
 #include "swarm.h"
+#include "function.h"
 #include "particle.h"
 #include "rrect.h"
 #include <algorithm>
@@ -7,7 +8,7 @@ namespace {
     bool compare(Particle* a, Particle* b) { return a->getVal() < b->getVal();}
 };
 
-Swarm::Swarm(Function f, int n, int dim) : f_(f), number_(n), dimension_(dim) {
+Swarm::Swarm(Function<double>* f, int n, int dim) : f_(f), number_(n), dimension_(dim) {
     this->rtree_ = new RTree<double, double, DIMS>;
     this->particles_.resize(n);
     std::generate(this->particles_.begin(), this->particles_.end(), [=] () {
@@ -19,7 +20,7 @@ Swarm::Swarm(Function f, int n, int dim) : f_(f), number_(n), dimension_(dim) {
 void Swarm::setBests_() {
     std::for_each(this->particles_.begin(), this->particles_.end(),
         [this] (Particle* p) {
-            p->setVal(this->f_(p->pos()));
+            p->setVal((* this->f_)(p->pos()));
             RRect r(p->pos());
             this->rtree_->Insert(r.min, r.max, p->getVal());
     });
@@ -30,16 +31,19 @@ void Swarm::setBests_() {
 
 void Swarm::dance() {
     std::vector<double> best = this->bestX();
+    # pragma omp parallel
+    {
     std::for_each(this->particles_.begin(), this->particles_.end(),
         [&] (Particle*& i) {
             i->step(best, this->c1, this->c2, this->momentum);
             RRect r(i->pos());
             if (this->rtree_->Search(r.min, r.max, NULL, NULL)) {
-                //std::cout << "Duplicate! This rect intersects " << this->rtree_->Search(r.min, r.max, NULL, NULL) << " rectangles" << std::endl;
+                std::cout << "Duplicate! This rect intersects " << this->rtree_->Search(r.min, r.max, NULL, NULL) << " rectangles" << std::endl;
                 delete i;
                 i = new Particle(Swarm::left_window, Swarm::right_window, this->dimension_);
             }
     });
+    }
     this->setBests_();
 }
 

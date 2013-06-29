@@ -333,6 +333,9 @@ RTREE_QUAL::~RTree() {
 RTREE_TEMPLATE
 void RTREE_QUAL::Insert(const ELEMTYPE a_min[NUMDIMS], const ELEMTYPE a_max[NUMDIMS], const DATATYPE& a_dataId) {
 
+    // TODO REMOVE
+    return;
+
     Branch branch;
     branch.m_data = a_dataId;
     branch.m_child = NULL;

@@ -2,8 +2,7 @@
 #define NELDERMEAD_H
 #include <vector>
 #include <map>
-
-class Function;
+#include "function.h"
 
 class NelderMead {
     private:
@@ -23,7 +22,7 @@ class NelderMead {
         bool operator()(const std::vector<double>&, const std::vector<double>&);
         void addSimplexPoint(std::vector<double>);
         std::vector<double> nextIteration(std::vector<double>, double); 
-        std::vector<double> drive(Function*);
+        std::vector<double> drive(Function<double>*);
 
         static constexpr double alpha = 1;
         static constexpr double gamma = (1 + 2.0/50.0);

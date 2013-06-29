@@ -2,6 +2,7 @@
 #define RRECT_H
 
 #include <vector>
+#include <algorithm>
 
 struct RRect {
     RRect(const std::vector<double>& point, bool rect = true) {
@@ -11,8 +12,10 @@ struct RRect {
             min[i] = point[i];
             max[i] = point[i];
             if (true || rect) {
-                min[i] -= 5e-40;
-                max[i] += 5e-40;
+                constexpr double side_length = 5e-5;
+                const double dist = side_length * std::sqrt(point.size()) / 2.0;
+                min[i] -= dist;
+                max[i] += dist;
             }
         }
     }
