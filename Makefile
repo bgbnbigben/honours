@@ -1,4 +1,4 @@
-SRC=swarm.cpp particle.cpp neldermead.cpp
+SRC=swarm.cpp particle.cpp neldermead.cpp main.cpp
 OBJS=${SRC:.cpp=.o}
 EXE=particle
 CXXFLAGS=-std=c++0x -Wall -g -march=native -fopenmp #-fsanitize=thread -fPIE -D_GLIBCXX_PARALLEL 
@@ -7,7 +7,7 @@ LDFLAGS=-g -fopenmp #-ltsan -fsanitize=thread -pie
 all: ${OBJS}
 	/usr/bin/g++-4.8 ${OBJS} -o ${EXE} ${LDFLAGS}
 
-%.o: %.cpp %.h
+%.o: %.cpp $(wildcard %.h)
 	/usr/bin/g++-4.8 ${CXXFLAGS} -c -o $@ $<
 
 clean:
