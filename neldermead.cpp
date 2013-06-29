@@ -123,7 +123,7 @@ std::vector<double> NelderMead::nextIteration(std::vector<double> point, double 
     }
 }
 
-std::vector<double> NelderMead::drive(Function* f) {
+std::vector<double> NelderMead::drive(Function<double>* f) {
     std::vector<double> curr = this->points_[0];
     try {
         while (!this->done_()) {

@@ -3,22 +3,16 @@
 #include <vector>
 #include <numeric>
 #include "RTree.h"
+#include "function.h"
 
 class Particle;
 
-class Function {
-    public:
-        double operator() (std::vector<double> x) {
-            return std::inner_product(x.begin(), x.end(), x.begin(), 0.0);
-        }
-};
-
 class Swarm {
-        Function f_;
+        Function<double>* f_;
         int number_;
         // TODO Refactor this properly. All the templates.
         int dimension_;
-        const static int DIMS = 50;
+        const static int DIMS = 10;
         // <ID, data type, numDims>
         // Use the id as the function value maybe?
         RTree<double, double, DIMS>* rtree_;
@@ -30,12 +24,12 @@ class Swarm {
         void setBests_();
 
     public:
-        Swarm(Function, int, int);
+        Swarm(Function<double>*, int, int);
 
         void dance();
         double bestVal();
         const std::vector<double>& bestX();
-        const int numBlockedOff() { return rtree_->Count(); }
+        //const int numBlockedOff() { return rtree_->Count(); }
 
         static constexpr double left_window = -30.0;
         static constexpr double right_window = 30.0;
