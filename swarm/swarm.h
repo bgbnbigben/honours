@@ -2,8 +2,8 @@
 #define SWARM_H
 #include <vector>
 #include <numeric>
-#include "RTree.h"
-#include "function.h"
+#include <utilities/RTree.h>
+#include <utilities/function.h>
 
 class Particle;
 

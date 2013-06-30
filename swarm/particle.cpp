@@ -2,9 +2,9 @@
 #include <omp.h>
 #include <random>
 #include <cmath>
-#include "particle.h"
-#include "neldermead.h"
-#include "swarm.h"
+#include <swarm/particle.h>
+#include <swarm/neldermead.h>
+#include <swarm/swarm.h>
 
 
 namespace {

@@ -3,10 +3,10 @@
 //#include <parallel/algorithm>
 //#include <parallel/settings.h>
 #include <vector>
-#include "swarm.h"
-#include "function.h"
-#include "neldermead.h"
-#include "tsqueue.h"
+#include <swarm/swarm.h>
+#include <swarm/neldermead.h>
+#include <utilities/function.h>
+#include <utilities/tsqueue.h>
 constexpr double NelderMead::alpha;
 constexpr double NelderMead::gamma;
 constexpr double NelderMead::rho;

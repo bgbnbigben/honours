@@ -2,7 +2,7 @@
 #define NELDERMEAD_H
 #include <vector>
 #include <map>
-#include "function.h"
+#include <utilities/function.h>
 
 class NelderMead {
     private:
