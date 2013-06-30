@@ -10,7 +10,7 @@ class Matrix {
 
     public:
         // constructors and destructor
-        Matrix() : pv0(0), pv1(0), prow0(0), prow1(0), nRow(0), nColumn(0), nTotal(0) {};
+        Matrix() : pv0(0), prow0(0), nRow(0), nColumn(0), nTotal(0) {};
         Matrix(const Matrix<T> &A);
         Matrix(int rows, int columns, const T &x = T(0));
         Matrix(int rows, int columns, const T *v);
@@ -55,11 +55,11 @@ class Matrix {
 
     private:
 
-        // 0-based and 1-based data pointer
-        T *pv0, *pv1;
+        // Full data
+        T *pv0;
 
-        // 0-based and 1-based row pointer's pointer
-        T **prow0, **prow1;
+        // row pointer's pointer
+        T **prow0;
 
         // row number, column number and total number
         int	 nRow;
@@ -154,17 +154,12 @@ void Matrix<T>::init (int rows, int columns) {
 
 	pv0 = new T[nTotal];
 	prow0 = new T*[nRow];
-	prow1 = new T*[nRow];
 
 	T *p = pv0;
-	pv1 = pv0 - 1;
 	for (int i = 0; i < nRow; i++) {
 		prow0[i] = p;
-		prow1[i] = p-1;
 		p += nColumn;
 	}
-
-	prow1--;
 }
 
 /**
@@ -195,10 +190,6 @@ void Matrix<T>::destroy() {
 
 	if (prow0 != NULL)
 		delete []prow0;
-
-	prow1++;
-	if (prow1 != NULL)
-		delete []prow1;
 }
 
 /**
