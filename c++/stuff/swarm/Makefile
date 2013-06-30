@@ -1,7 +1,10 @@
-SRC=swarm.cpp particle.cpp neldermead.cpp main.cpp
+SWARMSRC=swarm/swarm.cpp swarm/particle.cpp swarm/neldermead.cpp 
+BFGSSRC=
+UTILITYSRC=RTree.h rrect.h function.h tsqueue.h
+SRC=${SWARMSRC} ${BFGSSRC} main.cpp
 OBJS=${SRC:.cpp=.o}
 EXE=particle
-CXXFLAGS=-std=c++0x -Wall -g -march=native -fopenmp #-fsanitize=thread -fPIE -D_GLIBCXX_PARALLEL 
+CXXFLAGS=-std=c++0x -I. -Wall -g -march=native -fopenmp #-fsanitize=thread -fPIE -D_GLIBCXX_PARALLEL 
 LDFLAGS=-g -fopenmp #-ltsan -fsanitize=thread -pie
 
 all: ${OBJS}
@@ -14,4 +17,4 @@ clean:
 	rm -f ${OBJS} ${EXE}
 
 archive:
-	tar caf source.tar.gz Makefile ${SRC} ${SRC:.cpp=.h} RTree.h rrect.h
+	tar caf source.tar.gz Makefile ${SRC} ${SRC:.cpp=.h} ${UTILITYSRC}

@@ -1,7 +1,7 @@
-#include "swarm.h"
-#include "function.h"
-#include "particle.h"
-#include "rrect.h"
+#include <swarm/swarm.h>
+#include <swarm/particle.h>
+#include <utilities/function.h>
+#include <utilities/rrect.h>
 #include <algorithm>
 
 namespace {

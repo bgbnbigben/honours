@@ -1,5 +1,6 @@
-#include "neldermead.h"
-#include "swarm.h"
+#include <swarm/neldermead.h>
+#include <swarm/swarm.h>
+#include <utilities/vector_ops.h>
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
@@ -11,30 +12,6 @@ namespace {
     };
 };
 
-template <typename T>
-std::vector<T> operator+(const std::vector<T> &v1, const std::vector<T> &v2) {
-    std::vector<T> ret(v1.size());
-    for (unsigned i = 0; i < v2.size(); i++) {
-        ret[i] = v1[i] + v2[i];
-    }
-    return ret;
-}
-
-template <typename T>
-std::vector<T> operator-(const std::vector<T> &v1, const std::vector<T> &v2) {
-    std::vector<T> ret(v1.size());
-    for (unsigned i = 0; i < v2.size(); i++) {
-        ret[i] = v1[i] - v2[i];
-    }
-    return ret;
-}
-
-template <class T>
-std::vector<T> operator* (const T& val, const std::vector<T>& rhs) {
-    std::vector<T> ret(rhs);
-    std::for_each(ret.begin(), ret.end(), [val](T& i) { i *= val; });
-    return ret;
-}
 
 NelderMead::NelderMead(int dim, double tol, int iter) : dimension_(dim), termination_tolerance_(tol), max_num_iterations_(iter), iteration_count_(0) {
     this->points_.reserve(this->dimension_ + 1);
