@@ -5,6 +5,7 @@
 #include <swarm/particle.h>
 #include <swarm/neldermead.h>
 #include <swarm/swarm.h>
+#include <utilities/vector_ops.h>
 
 
 namespace {
@@ -21,17 +22,6 @@ namespace {
     }
 
 };
-
-/*void Particle::reload() {
-    std::generate(this->position_.begin(),
-            this->position_.end();
-            getRandomInWindow);
-    std::generate(this->velocity_.begin(),
-            this->velocity_.end(),
-            getRandomInWindow);
-    this->bestPosition_ = this->position_;
-    this->cost_ = 1e100;
-}*/
 
 Particle::Particle(double left, double right, int dim) : 
         leftWindow_(left), rightWindow_(right) {
@@ -65,11 +55,11 @@ void Particle::step(const std::vector<double>& direction, double c1, double c2, 
     //    this->position_ = n.drive(new Function());
     //} else {
         # pragma omp single
-        for (auto i = 0u; i < this->velocity_.size(); i++) {
-            this->velocity_[i] = momentum * (this->velocity_[i] +
-                c1 * ::getRandom() * (this->bestPosition_[i] - this->position_[i]) +
-                c2 * ::getRandom() * (direction[i] - this->position_[i]));
-            this->position_[i] += this->velocity_[i];
+        {
+            this->velocity_ = momentum * (this->velocity_ +
+                    c1 * ::getRandom() * (this->bestPosition_ - this->position_) +
+                    c2 * ::getRandom() * (direction - this->position_));
+            this->position_ += this->velocity_;
         }
     //}
 }
