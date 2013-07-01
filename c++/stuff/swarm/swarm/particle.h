@@ -12,7 +12,6 @@ class Particle {
 
     public:
         Particle(double, double, int);
-        void reload();
         void step(const std::vector<double>&, double, double, double);
         double& operator[](int i);
         inline void setVal(double cost) { 
