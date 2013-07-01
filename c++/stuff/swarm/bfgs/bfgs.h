@@ -3,7 +3,7 @@
 
 #include <utilities/matrix.h>
 #include <bfgs/linesearch.h>
-#include <numeric_limits>
+#include <limits>
 
 template <typename T, typename F>
 class BFGS : public LineSearch<T, F> {
