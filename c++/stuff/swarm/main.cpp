@@ -7,6 +7,7 @@
 #include <swarm/neldermead.h>
 #include <utilities/function.h>
 #include <utilities/tsqueue.h>
+#include <bfgs/bfgs.h>
 constexpr double NelderMead::alpha;
 constexpr double NelderMead::gamma;
 constexpr double NelderMead::rho;
@@ -39,33 +40,38 @@ int main() {
     tsqueue<std::vector<double>> q;
     Rosenbrock<double> testFunction;
 
+    BFGS<double, Rosenbrock<double> > bfgs;
     Swarm swarm(&testFunction, 300, 10);
     double bestF = swarm.bestVal();
-    int same = 0;
     std::cout.unsetf ( std::ios::floatfield );
     std::cout.precision(10);
-    while (same < 100) {
+    while (!swarm.done()) {
         swarm.dance();
         std::cout << "Best in swarm: " << swarm.bestVal() << std::endl;
         std::cout << "Best so far: " << bestF << std::endl;
-        if (bestF > swarm.bestVal()) {
+        if (bestF > swarm.bestVal())
             bestF = swarm.bestVal();
-            same = 0;
-        } else {
-            same++;
-        }
     }
     q.push(swarm.bestX());
 
     while (!q.empty()) {
-        auto guess = q.pop();
+        auto guess = *q.pop();
+        std::cout << "Guessing!" << std::endl;
+        bfgs.optimize(testFunction, guess, 1.0e-10, 1000);
+        if (bfgs.isSuccess()) {
+            std::cout << setiosflags(std::ios::fixed) << std::setprecision(6)
+                      << "The optimal value is at " <<  bfgs.getOptValue()
+                      << std::endl;
+            std::cout << "f(x) = " << testFunction(bfgs.getOptValue())
+                      << std::endl;
+        } else {
+            std::cout << "************\nBFGS Failed!\n************"
+                      << std::endl;
+            std::cout << "We started from\n"
+                      << swarm.bestX()
+                      << std::endl;
+        }
     }
-
-    std::cout << bestF << ":\t( ";
-    std::for_each(swarm.bestX().begin(), swarm.bestX().end(), [](double i) {
-        std::cout << i << ",\t";
-    });
-    std::cout << ")\n" << std::endl;
 
     //std::cout << "There are " << swarm.numBlockedOff() << " items in the tabu list" << std::endl;
     return 0;

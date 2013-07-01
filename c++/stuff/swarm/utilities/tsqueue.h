@@ -20,7 +20,7 @@ public:
     void push(T);
     std::shared_ptr<T> pop();
     std::shared_ptr<T> tryPop();
-    const bool empty() const;
+    bool empty() const;
 };
 
 template <class T>
@@ -54,7 +54,7 @@ inline std::shared_ptr<T> tsqueue<T>::tryPop() {
 }
 
 template <class T>
-inline const bool tsqueue<T>::empty() const {
+inline bool tsqueue<T>::empty() const {
     std::lock_guard<std::mutex> lock(this->mutex_);
     return this->q_.empty();
 }
@@ -63,6 +63,6 @@ extern template class tsqueue<std::vector<double>>;
 template void tsqueue<std::vector<double, std::allocator<double>>>::push(std::vector<double, std::allocator<double>> pValue);
 template std::shared_ptr<std::vector<double, std::allocator<double>>> tsqueue<std::vector<double, std::allocator<double>>>::pop();
 template std::shared_ptr<std::vector<double, std::allocator<double>>> tsqueue<std::vector<double, std::allocator<double>>>::tryPop();
-template const bool tsqueue<std::vector<double, std::allocator<double>>>::empty() const;
+template bool tsqueue<std::vector<double, std::allocator<double>>>::empty() const;
 
 # endif

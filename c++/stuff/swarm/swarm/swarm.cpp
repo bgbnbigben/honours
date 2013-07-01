@@ -2,13 +2,14 @@
 #include <swarm/particle.h>
 #include <utilities/function.h>
 #include <utilities/rrect.h>
+#include <utilities/vector_ops.h>
 #include <algorithm>
 
 namespace {
     bool compare(Particle* a, Particle* b) { return a->getVal() < b->getVal();}
 };
 
-Swarm::Swarm(Function<double>* f, int n, int dim) : f_(f), number_(n), dimension_(dim) {
+Swarm::Swarm(Function<double>* f, int n, int dim) : f_(f), number_(n), dimension_(dim), done_(false), same_(0) {
     this->rtree_ = new RTree<double, double, DIMS>;
     this->particles_.resize(n);
     std::generate(this->particles_.begin(), this->particles_.end(), [=] () {
@@ -18,6 +19,7 @@ Swarm::Swarm(Function<double>* f, int n, int dim) : f_(f), number_(n), dimension
 }
 
 void Swarm::setBests_() {
+    double best = this->particles_[0]->getVal();
     std::for_each(this->particles_.begin(), this->particles_.end(),
         [this] (Particle* p) {
             p->setVal((* this->f_)(p->pos()));
@@ -25,26 +27,35 @@ void Swarm::setBests_() {
             this->rtree_->Insert(r.min, r.max, p->getVal());
     });
     std::sort(this->particles_.begin(), this->particles_.end(), ::compare);
+    if (this->particles_[0]->getVal() > best)
+        this->same_++;
+    if (this->same_ > 100)
+        this->done_ = true;
 }
 
 #include <iostream>
 
 void Swarm::dance() {
-    std::vector<double> best = this->bestX();
+    auto best = this->bestX();
+    std::vector<double> centre(this->dimension_);
     # pragma omp parallel
     {
     std::for_each(this->particles_.begin(), this->particles_.end(),
         [&] (Particle*& i) {
             i->step(best, this->c1, this->c2, this->momentum);
+            centre += i->pos();
             RRect r(i->pos());
             if (this->rtree_->Search(r.min, r.max, NULL, NULL)) {
                 std::cout << "Duplicate! This rect intersects " << this->rtree_->Search(r.min, r.max, NULL, NULL) << " rectangles" << std::endl;
-                delete i;
-                i = new Particle(Swarm::left_window, Swarm::right_window, this->dimension_);
+                i->reload(i->pos()+.2, i->vel()+.2);
             }
     });
+    centre /= double(this->number_);
     }
     this->setBests_();
+    RRect r(centre);
+    if (this->rtree_->Search(r.min, r.max, NULL, NULL))
+        this->done_ = true;
 }
 
 double Swarm::bestVal() {

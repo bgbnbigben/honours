@@ -63,3 +63,8 @@ void Particle::step(const std::vector<double>& direction, double c1, double c2, 
         }
     //}
 }
+
+void Particle::reload(const std::vector<double>& p, const std::vector<double>& v) {
+    this->velocity_ = v;
+    this->position_ = p;
+}
