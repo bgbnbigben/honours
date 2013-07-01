@@ -706,4 +706,6 @@ T norm(const Matrix<T> &A) {
 
 	return sqrt(sum);
 }
+
+template class Matrix<double>;
 #endif
