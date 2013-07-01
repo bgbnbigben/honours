@@ -17,20 +17,14 @@ class BFGS : public LineSearch<T, F> {
         std::vector<T> getOptValue() const;
         std::vector<T> getGradNorm() const;
         T getFuncMin() const;
-        int getItrNum() const;
+        int numIterations() const;
 
     private:
 
-        // minimum value of objective function
         T fMin_;
-
-        // optimal solution
         std::vector<T> xOpt_;
-
-        // gradient norm for each iteration
         std::vector<T> gradNorm_;
 
-        // Machine precision
         const T EPS_ = std::numeric_limits<T>::epsilon();
 
 };
@@ -51,7 +45,7 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
                    v(N),
                    Hy(N),
                    gPrev(N);
-    Matrix<T> H = eye(N, T(1.0));
+    Matrix<T> H = eye<T>(N);
 
     std::vector<T> x(x0);
     T fx = func(x);
@@ -69,11 +63,11 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
 
         // check flag for restart
         if (!this->success_)
-            // TODO: isn't this comparison bullshit? needs more fabs.
-            if (norm(H - eye(N, T(1.0))) < this->EPS_)
+            // Test if the norm of (H - I)
+            if (norm(H - eye<T>(N)) < this->EPS_)
                 break;
             else {
-                H = eye(N, T(1.0));
+                H = eye<T>(N);
                 cnt++;
                 if (cnt == maxItr)
                     break;
@@ -94,7 +88,7 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
 
             // TODO: less bullshit / more fabs.
             if ((ys < this->EPS_) || (yHy < this->EPS_))
-                H = eye(N, T(1.0));
+                H = eye<T>(N);
             else {
                 v = sqrt(yHy) * (s/ys - Hy/yHy);
                 H = H + multTr(s,s)/ys - multTr(Hy,Hy)/yHy + multTr(v,v);
@@ -145,7 +139,7 @@ inline T BFGS<T, F>::getFuncMin() const {
  * Get the iteration number.
  */
 template <typename T, typename F>
-inline int BFGS<T, F>::getItrNum() const {
+inline int BFGS<T, F>::numIterations() const {
     return gradNorm_.size() - 1;
 }
 

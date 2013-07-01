@@ -9,7 +9,7 @@ namespace {
     bool compare(Particle* a, Particle* b) { return a->getVal() < b->getVal();}
 };
 
-Swarm::Swarm(Function<double>* f, int n, int dim) : f_(f), number_(n), dimension_(dim), done_(false), same_(0) {
+Swarm::Swarm(Function<double>* f, int n, int dim) : f_(f), number_(n), dimension_(dim), done_(false), same_(0), iterations_(0) {
     this->rtree_ = new RTree<double, double, DIMS>;
     this->particles_.resize(n);
     std::generate(this->particles_.begin(), this->particles_.end(), [=] () {
@@ -33,29 +33,28 @@ void Swarm::setBests_() {
         this->done_ = true;
 }
 
-#include <iostream>
-
 void Swarm::dance() {
+    this->iterations_++;
     auto best = this->bestX();
     std::vector<double> centre(this->dimension_);
     # pragma omp parallel
     {
-    std::for_each(this->particles_.begin(), this->particles_.end(),
-        [&] (Particle*& i) {
-            i->step(best, this->c1, this->c2, this->momentum);
-            centre += i->pos();
-            RRect r(i->pos());
-            if (this->rtree_->Search(r.min, r.max, NULL, NULL)) {
-                std::cout << "Duplicate! This rect intersects " << this->rtree_->Search(r.min, r.max, NULL, NULL) << " rectangles" << std::endl;
-                i->reload(i->pos()+.2, i->vel()+.2);
-            }
-    });
-    centre /= double(this->number_);
+        std::for_each(this->particles_.begin(), this->particles_.end(),
+            [&] (Particle*& i) {
+                i->step(best, this->c1, this->c2, this->momentum);
+                RRect r(i->pos());
+                centre += i->pos();
+                if (this->rtree_->Search(r.min, r.max, NULL, NULL))
+                    i->reload(i->pos()+.2, i->vel()+.2);
+
+        });
+        centre /= double(this->number_);
     }
     this->setBests_();
     RRect r(centre);
-    if (this->rtree_->Search(r.min, r.max, NULL, NULL))
+    if (this->rtree_->Search(r.min, r.max, NULL, NULL) > this->number_ / 2) {
         this->done_ = true;
+    }
 }
 
 double Swarm::bestVal() {

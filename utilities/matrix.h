@@ -138,7 +138,7 @@ Matrix<T> multTr (const Matrix<T>&, const Matrix<T>&);
 template<typename T>
 Matrix<T> multTr (const std::vector<T>&, const std::vector<T>&);
 
-template<typename T> Matrix<T> eye (int, const T&);
+template<typename T> Matrix<T> eye (int, const T& x = T(1));
 
 // utilities
 template<typename T> T norm (const Matrix<T>&);
@@ -681,6 +681,9 @@ Matrix<T> multTr(const std::vector<T> &a, const std::vector<T> &b) {
 
 /**
  * Generate the identity matrix.
+ *
+ * x defaults to 1, but this can be changed to make the diagonal some other
+ * value
  */
 template <typename T>
 Matrix<T> eye(int N, const T &x) {
