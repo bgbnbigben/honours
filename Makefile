@@ -5,7 +5,7 @@ PCH=utilities/vector_ops.h.gch utilities/matrix.h.gch utilities/tsqueue.h.gch
 SRC=${SWARMSRC} main.cpp
 OBJS=${SRC:.cpp=.o}
 EXE=particle
-CXXFLAGS=-std=c++0x -I. -Wall -g -march=native -fopenmp #-fsanitize=thread -fPIE -D_GLIBCXX_PARALLEL 
+CXXFLAGS=-std=c++0x -I. -Wall -Wextra -g -march=native -fopenmp #-fsanitize=thread -fPIE -D_GLIBCXX_PARALLEL 
 LDFLAGS=-g -fopenmp #-ltsan -fsanitize=thread -pie
 
 all: ${OBJS} ${PCH}
@@ -18,6 +18,9 @@ all: ${OBJS} ${PCH}
 	/usr/bin/g++-4.8 ${CXXFLAGS} $<
 
 clean:
+	rm -f ${OBJS} ${EXE}
+
+fullclean:
 	rm -f ${OBJS} ${EXE} ${PCH}
 
 archive:

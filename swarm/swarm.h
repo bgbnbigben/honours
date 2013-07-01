@@ -9,13 +9,15 @@ class Particle;
 
 class Swarm {
         Function<double>* f_;
-        int number_;
+        unsigned number_;
         // TODO Refactor this properly. All the templates.
         int dimension_;
         const static int DIMS = 10;
         // <ID, data type, numDims>
         // Use the id as the function value maybe?
         RTree<double, double, DIMS>* rtree_;
+        bool done_;
+        int same_;
 
     public:
         std::vector<Particle*> particles_;
@@ -29,6 +31,10 @@ class Swarm {
         void dance();
         double bestVal();
         const std::vector<double>& bestX();
+        bool done() const {
+            return this->done_;
+        }
+
         //const int numBlockedOff() { return rtree_->Count(); }
 
         static constexpr double left_window = -30.0;
