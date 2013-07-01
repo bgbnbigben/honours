@@ -4,11 +4,12 @@
 #ifndef  __VECTOR_OPS_H__
 #define __VECTOR_OPS_H__
 
-#include <vector>
 #include <functional>
 #include <numeric>
 #include <algorithm>
 #include <iostream>
+
+#include <vector>
 
 /* Addition operators */
 template <typename T>
@@ -170,6 +171,10 @@ T dotProd(const std::vector<T>& v1, std::vector<T>& v2) {
 template <typename T>
 T norm(const std::vector<T>& v1) {
     return sqrt(std::inner_product(v1.begin(), v1.end(), v1.begin(), T(0.0)));
+}
+
+namespace std {
+    template class vector<double>;
 }
 
 #endif
