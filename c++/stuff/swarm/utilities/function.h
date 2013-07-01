@@ -3,34 +3,43 @@
 
 #include <algorithm>
 
-template <class type>
+template <class T>
 class Function {
+    protected:
+        unsigned calls_;
+        unsigned grads_;
+
     public:
-        virtual type operator() (const std::vector<type>&) = 0;
-        virtual std::vector<type> grad(const std::vector<type>&) = 0;
+        Function() : calls_(0), grads_(0) {};
+        virtual T operator() (const std::vector<T>&) = 0;
+        virtual std::vector<T> grad(const std::vector<T>&) = 0;
+        inline unsigned numCalls() const { return this->calls_; }
+        inline unsigned numGrads() const { return this->grads_; }
 };
 
-template <class type>
-class Paraboloid : public Function<type> {
+template <class T>
+class Paraboloid : public Function<T> {
     public:
-        type operator() (const std::vector<type> &x) {
+        Paraboloid() : Function<T>() {};
+
+        T operator() (const std::vector<T> &x) {
+            this->calls_++;
             return std::inner_product(x.begin(), x.end(), x.begin(), 0.0);
         }
 
-        std::vector<type> grad(const std::vector<type> &x) {
-            std::vector<type> r(x.size());
-            std::transform(x.begin(), x.end(), r, [](type& i) {
-                return type(2)*i;
-            });
-            return r;
+        std::vector<T> grad(const std::vector<T> &x) {
+            this->grads_++;
+            return T(2)*x;
         }
 };
 
-template <class type>
-class Rosenbrock : public Function<type> {
+template <class T>
+class Rosenbrock : public Function<T> {
     public:
-        type operator()(const std::vector<type> &x) {
-            type s = 0.0;
+        Rosenbrock() : Function<T>() {};
+        T operator()(const std::vector<T> &x) {
+            this->calls_++;
+            T s = 0.0;
             for (int i = 0; i < x.size(); i++) {
                 s += (1-x[i])*(1-x[i]);
                 if (i < x.size() - 1)
@@ -39,8 +48,9 @@ class Rosenbrock : public Function<type> {
             return s;
         }   
 
-        std::vector<type> grad(const std::vector<type> &x) {
-            std::vector<type> df(x.size());
+        std::vector<T> grad(const std::vector<T> &x) {
+            this->grads_++;
+            std::vector<T> df(x.size());
             for (int i = 0; i < x.size(); i++) {
                 if (i < x.size() - 1)
                     df[i] = -400*x[i] * (x[i+1] - x[i] * x[i]) -2 * (1-x[i]);

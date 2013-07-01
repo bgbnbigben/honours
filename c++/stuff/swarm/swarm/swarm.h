@@ -18,6 +18,7 @@ class Swarm {
         RTree<double, double, DIMS>* rtree_;
         bool done_;
         int same_;
+        unsigned iterations_;
 
     public:
         std::vector<Particle*> particles_;
@@ -31,11 +32,10 @@ class Swarm {
         void dance();
         double bestVal();
         const std::vector<double>& bestX();
-        bool done() const {
-            return this->done_;
-        }
+        bool done() const { return this->done_; }
 
-        //const int numBlockedOff() { return rtree_->Count(); }
+        int numIterations() const { return this->iterations_; }
+        int numParticles() const { return this->number_; }
 
         static constexpr double left_window = -30.0;
         static constexpr double right_window = 30.0;

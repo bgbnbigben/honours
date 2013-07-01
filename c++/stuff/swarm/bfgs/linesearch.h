@@ -14,7 +14,7 @@ class LineSearch {
 
         T getStep(F &f, std::vector<T> &xk, std::vector<T> &dk, int maxItr=10);
 
-        int getFuncNum() const;
+        int numFuncEvaluations() const;
         bool isSuccess() const;
 
     protected:
@@ -68,7 +68,7 @@ T LineSearch<T, F>::getStep(F &f, std::vector<T> &xk, std::vector<T> &dk, int ma
 
 
 template <typename T, typename F>
-inline int LineSearch<T, F>::getFuncNum() const {
+inline int LineSearch<T, F>::numFuncEvaluations() const {
     return funcNum_;
 }
 
