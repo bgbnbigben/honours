@@ -3,9 +3,7 @@
 
 #include <utilities/matrix.h>
 #include <bfgs/linesearch.h>
-
-// TODO (BS): What the fuck is this?
-const double EPS = 2.220446049250313e-016;
+#include <numeric_limits>
 
 template <typename T, typename F>
 class BFGS : public LineSearch<T, F> {
@@ -32,6 +30,9 @@ class BFGS : public LineSearch<T, F> {
         // gradient norm for each iteration
         std::vector<T> gradNorm_;
 
+        // Machine precision
+        const T EPS_ = std::numeric_limits<T>::epsilon();
+
 };
 
 /**
@@ -41,13 +42,9 @@ class BFGS : public LineSearch<T, F> {
 template <typename T, typename F>
 void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
     // initialize parameters.
-    int k = 0,
-        cnt = 0,
-        N = x0.size();
+    unsigned k = 0, cnt = 0, N = x0.size();
 
-    T ys,
-      yHy,
-      alpha;
+    T ys, yHy, alpha;
     std::vector<T> d(N),
                    s(N),
                    y(N),
@@ -72,7 +69,8 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
 
         // check flag for restart
         if (!this->success_)
-            if (norm(H - eye(N, T(1.0))) < EPS)
+            // TODO: isn't this comparison bullshit? needs more fabs.
+            if (norm(H - eye(N, T(1.0))) < this->EPS_)
                 break;
             else {
                 H = eye(N, T(1.0));
@@ -94,16 +92,13 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
             ys = dotProd(y, s);
             yHy = dotProd(y, Hy);
 
-            std::cout << "s: " << s;
-            std::cout << "\ny: " << y;
-            std::cout << "\nHy: " << Hy;
-            if ((ys < EPS) || (yHy < EPS))
+            // TODO: less bullshit / more fabs.
+            if ((ys < this->EPS_) || (yHy < this->EPS_))
                 H = eye(N, T(1.0));
             else {
                 v = sqrt(yHy) * (s/ys - Hy/yHy);
                 H = H + multTr(s,s)/ys - multTr(Hy,Hy)/yHy + multTr(v,v);
             }
-            std::cout << g << std::endl;
             gnorm[k++] = norm(g);
         }
     }
@@ -111,7 +106,7 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
     xOpt_ = x;
     fMin_ = fx;
     gradNorm_.resize(k);
-    for (int i = 0; i < k; ++i)
+    for (unsigned i = 0; i < k; ++i)
         gradNorm_[i] = gnorm[i];
 
     if (gradNorm_[k-1] > tol)
