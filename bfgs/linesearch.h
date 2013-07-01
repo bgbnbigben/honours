@@ -12,8 +12,7 @@ class LineSearch {
         LineSearch() : funcNum_(0), success_(true) {};
         ~LineSearch() {};
 
-        T getStep(F &func, std::vector<T> &xk, std::vector<T> &dk,
-                      int maxItr=10);
+        T getStep(F &f, std::vector<T> &xk, std::vector<T> &dk, int maxItr=10);
 
         int getFuncNum() const;
         bool isSuccess() const;
@@ -24,13 +23,9 @@ class LineSearch {
 
 };
 
-/**
- * Finding the step size at point "xk" in direction of "dk" of function
- * "func". The default max number of steps is 10.
- */
-/* x_k = point, d_k = direction, function = func */
+/* x_k = point, d_k = direction, function = f */
 template <typename T, typename F>
-T LineSearch<T, F>::getStep(F &func, std::vector<T> &xk, std::vector<T> &dk, int maxItr) {
+T LineSearch<T, F>::getStep(F &f, std::vector<T> &xk, std::vector<T> &dk, int maxItr) {
     // Set line search parameters that everyone uses.
     T mu = T(0.001),
           kUp = T(0.5),
@@ -39,19 +34,19 @@ T LineSearch<T, F>::getStep(F &func, std::vector<T> &xk, std::vector<T> &dk, int
           alphaMin,
           alphaMax;
 
-    T fNew, fk = func(xk);
+    T fNew, fk = f(xk);
 
-    std::vector<T> xNew, gk = func.grad(xk);
+    std::vector<T> xNew, gk = f.grad(xk);
 
     T gd = dotProd(gk, dk);
 
-    for( int i = 0; i < maxItr; ++i) {
+    for (int i = 0; i < maxItr; ++i) {
         xNew = xk + alpha*dk;
-        fNew = func(xNew);
-        funcNum_++;
+        fNew = f(xNew);
+        this->funcNum_++;
 
-        if (fNew < fk+mu*alpha*gd) {
-            success_ = true;
+        if (fNew < fk + mu*alpha*gd) {
+            this->success_ = true;
             return alpha;
         } else {
             alphaMin = kLow*alpha;
@@ -59,17 +54,15 @@ T LineSearch<T, F>::getStep(F &func, std::vector<T> &xk, std::vector<T> &dk, int
 
             // Compute the step by using quadratic polynomial interpolation.
             alpha = T(-0.5) * alpha * alpha * gd / (fNew - fk - alpha * gd);
-
-            // bound checking
             alpha = std::max(alphaMin, std::min(alphaMax, alpha));
         }
     }
 
     if (fNew >= fk) {
-        success_ = false;
+        this->success_ = false;
         return T(0.0);
     }
-    success_ = true;
+    this->success_ = true;
     return alpha;
 }
 
