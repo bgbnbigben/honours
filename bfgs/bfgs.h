@@ -63,7 +63,7 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
 
         // check flag for restart
         if (!this->success_)
-            // Test if the norm of (H - I)
+            // Test if the norm of (H - I) is beyond machine precision
             if (norm(H - eye<T>(N)) < this->EPS_)
                 break;
             else {
@@ -99,9 +99,7 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
 
     xOpt_ = x;
     fMin_ = fx;
-    gradNorm_.resize(k);
-    for (unsigned i = 0; i < k; ++i)
-        gradNorm_[i] = gnorm[i];
+    gradNorm_ = gnorm;
 
     if (gradNorm_[k-1] > tol)
         this->success_ = false;
