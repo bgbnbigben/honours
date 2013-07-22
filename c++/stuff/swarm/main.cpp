@@ -19,8 +19,8 @@ int main() {
     //__gnu_parallel::_Settings::set(s);
 
     tsqueue<std::vector<double>> q;
-    Paraboloid<double> testFunction;
-    BFGS<double, Paraboloid<double> > bfgs;
+    Rosenbrock<double> testFunction;
+    BFGS<double, Rosenbrock<double> > bfgs;
     Swarm swarm(&testFunction, 10, 10);
 
     double bestF = swarm.bestVal();

@@ -38,13 +38,14 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
     // initialize parameters.
     unsigned k = 0, cnt = 0, N = x0.size();
 
-    T ys, yHy, alpha;
+    T gamma, delta, alpha;
     std::vector<T> d(N),
+                   gPrev(N),
+                   t(N),
                    s(N),
                    y(N),
-                   v(N),
-                   Hy(N),
-                   gPrev(N);
+                   z(N);
+
     Matrix<T> H = eye<T>(N);
 
     std::vector<T> x(x0);
@@ -57,6 +58,7 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
     while ((gnorm[k-1] > tol) && (k < maxItr)) {
         // descent direction
         d = - H * g;
+        
 
         // one dimension searching
         alpha = this->getStep(func, x, d);
@@ -75,6 +77,7 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
         else {
             // update
             s = alpha * d;
+
             x += s;
             fx = func(x);
             this->funcNum_++;
@@ -82,17 +85,20 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
             g = func.grad(x);
             y = g - gPrev;
 
-            Hy = H * y;
-            ys = dotProd(y, s);
-            yHy = dotProd(y, Hy);
-
-            // TODO: less bullshit / more fabs.
-            if ((ys < this->EPS_) || (yHy < this->EPS_))
-                H = eye<T>(N);
-            else {
-                v = sqrt(yHy) * (s/ys - Hy/yHy);
-                H = H + multTr(s,s)/ys - multTr(Hy,Hy)/yHy + multTr(v,v);
+            t = H * g;
+            z = s - t + d;
+            gamma = dotProd(s, y);
+            delta = dotProd(z, y);
+            if (delta < 2.0 * gamma * this->EPS_) {
+                z = (2.0*gamma * z - delta * s) / (2.0 * gamma * gamma);
+            } else {
+                z = (z - (delta/(2.0*gamma))*s)/gamma;
             }
+            H = H + multTr(z, s) + multTr(s, z);
+            gamma = dotProd(s, g);
+            delta = dotProd(z, g);
+            d = t + gamma*z + delta*s;
+
             gnorm[k++] = norm(g);
         }
     }
