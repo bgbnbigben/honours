@@ -12,8 +12,6 @@
 #include <vector>
 #include "bfgs.h"
 #include <utilities/function.h>
-using namespace std;
-
 
 int main() {
     Rosenbrock<double> f;
@@ -23,21 +21,21 @@ int main() {
 
     BFGS< double, Rosenbrock<double> > bfgs;
     bfgs.optimize( f, x0, double(1.0e-10), 1000);
-    if( bfgs.isSuccess() )
-    {
-        std::vector<double> xmin = bfgs.getOptValue();
+    std::vector<double> xmin = bfgs.getOptValue();
+    if (bfgs.isSuccess()) {
         int N = bfgs.numIterations();
-        cout << "The iterative number is:   " << N << endl << endl;
-        cout << "The number of function calculation is:   "
-             << f.numCalls() << endl << endl;
-        cout << setiosflags(ios::fixed) << setprecision(4);
-        cout << "The optimal value of x is:   " << xmin << endl;
-        cout << "The minimum value of f(x) is:   " << f(xmin) << endl << endl;
-        cout << "The gradient's norm at x is:   "
-             << bfgs.getGradNorm()[N] << endl << endl;
+        std::cout << "The iterative number is:  " << N << "\n";
+        std::cout << "\nThe number of function calculation is:   "
+                  << f.numCalls() << "\n";
+        std::cout << "\nThe gradient's norm at x is:   "
+                  << bfgs.getGradNorm()[N] << "\n";
+    } else {
+        std::cout << "The optimal solution can't be found!";
     }
-    else
-        cout << "The optimal solution  cann't be found!" << endl;
+    std::cout << std::setiosflags(std::ios::fixed) << std::setprecision(4);
+    std::cout << "\nThe value of x is:   " << xmin;
+    std::cout << "\nThe minimum value of f(x) is:   " << f(xmin) << "\n" << std::endl;
+
 
     return 0;
 }

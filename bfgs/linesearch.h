@@ -8,7 +8,6 @@
 template <typename T, typename F>
 class LineSearch {
     public:
-
         LineSearch() : funcNum_(0), success_(true) {};
         ~LineSearch() {};
 
