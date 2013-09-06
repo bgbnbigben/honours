@@ -1,6 +1,7 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 #include <vector>
+#include <utilities/bound.h>
 
 class Particle {
         std::vector<double> position_;
@@ -13,7 +14,7 @@ class Particle {
 
     public:
         Particle(double, double, int);
-        void step(const std::vector<double>&, double, double, double);
+        void step(const std::vector<double>&, double, double, double, const std::vector<Bound<double>>&);
         double& operator[](int i);
         inline void setVal(double cost) { 
             if (cost < this->cost_) 

@@ -6,6 +6,7 @@
 #include <swarm/neldermead.h>
 #include <swarm/swarm.h>
 #include <utilities/vector_ops.h>
+#include <utilities/bound.h>
 
 
 namespace {
@@ -43,7 +44,7 @@ double& Particle::operator[] (int i) {
 }
 
 /* TODO: make it clamp to window or re-init or something */
-void Particle::step(const std::vector<double>& direction, double c1, double c2, double momentum) {
+void Particle::step(const std::vector<double>& direction, double c1, double c2, double momentum, const std::vector<Bound<double>>& bounds) {
     //if (getRandom() < Particle::mutation_prob) {
     //    NelderMead n(this->position_.size(), 0, 20);
     //    n.addSimplexPoint(this->position_);
@@ -60,6 +61,19 @@ void Particle::step(const std::vector<double>& direction, double c1, double c2, 
                     c1 * ::getRandom() * (this->bestPosition_ - this->position_) +
                     c2 * ::getRandom() * (direction - this->position_));
             this->position_ += this->velocity_;
+        }
+        # pragma omp parallel
+        {
+            std::for_each(bounds.begin(), bounds.end(),
+                [&] (Bound<double> bound) {
+                    auto current = this->position_[bound.variable];
+                    if (bound.type == Bound<double>::types::LOWER ||
+                        bound.type == Bound<double>::types::BOTH) 
+                        this->position_[bound.variable] = std::max(current, bound.lower);
+                    if (bound.type == Bound<double>::types::UPPER ||
+                        bound.type == Bound<double>::types::BOTH)
+                        this->position_[bound.variable] = std::min(current, bound.upper);
+                });
         }
     //}
 }
