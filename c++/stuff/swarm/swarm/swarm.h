@@ -4,6 +4,7 @@
 #include <numeric>
 #include <utilities/RTree.h>
 #include <utilities/function.h>
+#include <utilities/bound.h>
 
 class Particle;
 
@@ -19,15 +20,17 @@ class Swarm {
         bool done_;
         int same_;
         unsigned iterations_;
+        std::vector<Bound<double>> bounds_;
 
     public:
         std::vector<Particle*> particles_;
     private:
 
         void setBests_();
+        void enforceBounds_(Particle*);
 
     public:
-        Swarm(Function<double>*, int, int);
+        Swarm(Function<double>*, int, int, std::vector<Bound<double>>);
 
         void dance();
         double bestVal();

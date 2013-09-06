@@ -7,14 +7,20 @@
 
 namespace {
     bool compare(Particle* a, Particle* b) { return a->getVal() < b->getVal();}
+    bool boundCompare(const Bound<double>& a, const Bound<double>& b) { return a.variable < b.variable; }
 };
 
-Swarm::Swarm(Function<double>* f, int n, int dim) : f_(f), number_(n), dimension_(dim), done_(false), same_(0), iterations_(0) {
+Swarm::Swarm(Function<double>* f, int n, int dim, std::vector<Bound<double>> bounds) : f_(f), number_(n), dimension_(dim), done_(false), same_(0), iterations_(0), bounds_(bounds) {
     this->rtree_ = new RTree<double, double, DIMS>;
     this->particles_.resize(n);
-    std::generate(this->particles_.begin(), this->particles_.end(), [=] () {
-        return new Particle(Swarm::left_window, Swarm::right_window, dim);
-    });
+    std::sort(this->bounds_.begin(), this->bounds_.end(), ::boundCompare);
+    # pragma omp parallel
+    {
+        # pragma omp for
+        for (int i = 0; i < this->particles_.size(); i++) {
+            this->particles_[i] = new Particle(this->bounds_[i].lower, this->bounds_[i].upper, dim);
+        }
+    }
     this->setBests_();
 }
 
