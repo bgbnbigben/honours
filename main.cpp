@@ -7,6 +7,8 @@
 #include <swarm/neldermead.h>
 #include <utilities/function.h>
 #include <utilities/tsqueue.h>
+#include <utilities/vector_ops.h>
+#include <utilities/bound.h>
 #include <bfgs/bfgs.h>
 constexpr double NelderMead::alpha;
 constexpr double NelderMead::gamma;

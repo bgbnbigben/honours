@@ -12,7 +12,7 @@ class Swarm {
         unsigned number_;
         // TODO Refactor this properly. All the templates.
         int dimension_;
-        const static int DIMS = 10;
+        const static int DIMS = 1024;
         // <ID, data type, numDims>
         // Use the id as the function value maybe?
         RTree<double, double, DIMS>* rtree_;

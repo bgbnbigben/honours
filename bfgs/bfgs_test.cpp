@@ -12,6 +12,8 @@
 #include <vector>
 #include "bfgs.h"
 #include <utilities/function.h>
+#include <utilities/vector_ops.h>
+#include <utilities/bound.h>
 
 int main() {
     Rosenbrock<double> f;
@@ -20,15 +22,13 @@ int main() {
     std::vector<double> x0(10);
 
     BFGS< double, Rosenbrock<double> > bfgs;
-    bfgs.optimize( f, x0, double(1.0e-10), 1000);
+    bfgs.optimize(f, x0, std::vector<Bound<double>>());
     std::vector<double> xmin = bfgs.getOptValue();
     if (bfgs.isSuccess()) {
         int N = bfgs.numIterations();
         std::cout << "The iterative number is:  " << N << "\n";
         std::cout << "\nThe number of function calculation is:   "
                   << f.numCalls() << "\n";
-        std::cout << "\nThe gradient's norm at x is:   "
-                  << bfgs.getGradNorm()[N] << "\n";
     } else {
         std::cout << "The optimal solution can't be found!";
     }

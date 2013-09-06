@@ -82,7 +82,6 @@ void operator-=(std::vector<T> &v1, const T &c1) {
 }
 
 /* Multiplication operators */
-
 /* Scales a vector by another vector element-wise */
 template <typename T>
 std::vector<T> operator*(const std::vector<T> &v1, const std::vector<T> &v2) {
@@ -164,7 +163,7 @@ std::ostream& operator<<(std::ostream &out, const std::vector<T> &v) {
 }
 
 template <typename T>
-T dotProd(const std::vector<T>& v1, std::vector<T>& v2) {
+T dotProd(const std::vector<T> v1, std::vector<T> v2) {
     return std::inner_product(v1.begin(), v1.end(), v2.begin(), T(0.0));
 }
 
@@ -176,5 +175,71 @@ T norm(const std::vector<T>& v1) {
 namespace std {
     template class vector<double>;
 }
+
+extern "C" {
+    // LU decomoposition of a general matrix
+    void dgetrf_(int* M, int *N, double* A, int* lda, int* IPIV, int* INFO);
+    // generate inverse of a matrix given its LU decomposition
+    void dgetri_(int* N, double* A, int* lda, int* IPIV, double* WORK, int* lwork, int* INFO);
+}
+
+template <typename T>
+std::vector<T> inverse(std::vector<T> mat) {
+    int N = mat.size();
+    assert(N && N == mat[0].size());
+    double* A = new double[N*N];
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            A[i*(j+1)] = mat[i][j];
+        }
+    }
+    int *IPIV = new int[N+1];
+    int LWORK = N*N;
+    double *WORK = new double[LWORK];
+    int INFO;
+
+    dgetrf_(&N,&N,A,&N,IPIV,&INFO);
+    dgetri_(&N,A,&N,IPIV,WORK,&LWORK,&INFO);
+
+    delete IPIV;
+    delete WORK;
+
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            mat[i][j] = A[i*(j+1)];
+        }
+    }
+    return mat;
+}
+
+template <typename T>
+std::vector<T> transpose(std::vector<T> mat) {
+    int N = mat.size();
+    assert(N && N == mat[0].size());
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < i; j++) {
+            auto ij = mat[i][j];
+            auto ji = mat[j][i];
+            mat[i][j] = ji;
+            mat[j][i] = ij;
+        }
+    }
+
+    return mat;
+}
+
+/* matrix mult */
+template <typename T>
+std::vector<T> operator*(const std::vector<std::vector<T>>& m, const std::vector<T> &v) {
+    assert(m.size() == v.size());
+    std::vector<T> ret(v.size());
+    for (int i = 0; i < v.size(); i++) {
+        auto temp = m[i];
+        ret[i] = dotProd<double>(temp, v);
+    }
+    return ret;
+}
+
+
 
 #endif
