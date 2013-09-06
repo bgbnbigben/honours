@@ -1,116 +1,110 @@
 #ifndef BFGS_H
 #define BFGS_H
 
-#include <utilities/matrix.h>
-#include <bfgs/linesearch.h>
-#include <limits>
+#include <utilities/bound.h>
+#include <bfgs/lbfgsh_prototypes.h>
+#include <cstring>
 
 template <typename T, typename F>
-class BFGS : public LineSearch<T, F> {
+class BFGS { 
     public:
 
-        BFGS(): LineSearch<T, F>() {};
-        ~BFGS() {};
-
-        void optimize(F &func, std::vector<T> &x0, T tol=T(1.0e-6), int maxItr=100);
+    void optimize(F&, std::vector<T>&, std::vector<Bound<T>> b, T decreaseFactor=1e1,
+                  T projectionTol=1e-5);
 
         std::vector<T> getOptValue() const;
-        std::vector<T> getGradNorm() const;
         T getFuncMin() const;
         int numIterations() const;
+        inline bool isSuccess() const { return success_; }
 
     private:
 
         T fMin_;
         std::vector<T> xOpt_;
         std::vector<T> gradNorm_;
-
-        const T EPS_ = std::numeric_limits<T>::epsilon();
-
+        int iters_;
+        bool success_;
 };
 
 /**
- * Finding the optimal solution. The default tolerance error and maximum
- * iteratin number are "tol=1.0e-6" and "maxItr=100", respectively.
  */
 template <typename T, typename F>
-void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
-    // initialize parameters.
-    unsigned k = 0, cnt = 0, N = x0.size();
+void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, std::vector<Bound<T>> bounds, T decreaseFactor, T projectionTol) {
+    //char task[60 + 1 + 1], csave[60 + 1 + 1];
+    char task[60];
+    char csave[60];
+    for (int i = 0; i < 60; i++) csave[i] = ' ';
+    strncpy(task, "START", 60);
+    for (int i = 5; i < 60; i++) task[i] = ' ';
 
-    T gamma, delta, alpha;
-    std::vector<T> d(N),
-                   gPrev(N),
-                   t(N),
-                   s(N),
-                   y(N),
-                   z(N);
+    char lsave[4] = {0, 0, 0, 0};
+    int n = x0.size(), m = 5, iprint = 1; 
+    int isave[44];
 
-    Matrix<T> H = eye<T>(N);
+    double *x = new double[n];
+    std::copy(x0.begin(), x0.end(), x);
 
-    std::vector<T> x(x0);
-    T fx = func(x);
-    this->funcNum_++;
-    std::vector<T> gnorm(maxItr);
-    std::vector<T> g = func.grad(x);
-    gnorm[k++]= norm(g);
-
-    while ((gnorm[k-1] > tol) && (k < maxItr)) {
-        // descent direction
-        d = - H * g;
-        
-
-        // one dimension searching
-        alpha = this->getStep(func, x, d);
-
-        // check flag for restart
-        if (!this->success_)
-            // Test if the norm of (H - I) is beyond machine precision
-            if (norm(H - eye<T>(N)) < this->EPS_)
-                break;
-            else {
-                H = eye<T>(N);
-                cnt++;
-                if (cnt == maxItr)
-                    break;
-            }
-        else {
-            // update
-            s = alpha * d;
-
-            x += s;
-            fx = func(x);
-            this->funcNum_++;
-            gPrev = g;
-            g = func.grad(x);
-            y = g - gPrev;
-
-            t = H * g;
-            z = s - t + d;
-            gamma = dotProd(s, y);
-            delta = dotProd(z, y);
-            if (delta < 2.0 * gamma * this->EPS_) {
-                z = (2.0*gamma * z - delta * s) / (2.0 * gamma * gamma);
-            } else {
-                z = (z - (delta/(2.0*gamma))*s)/gamma;
-            }
-            H = H + multTr(z, s) + multTr(s, z);
-            gamma = dotProd(s, g);
-            delta = dotProd(z, g);
-            d = t + gamma*z + delta*s;
-
-            gnorm[k++] = norm(g);
-        }
+    int *nbd = new int[n];
+    for (int i = 0; i < n; i++) nbd[i] = 0;
+    double *l = new double[n]; 
+    double *u = new double[n];
+    for (auto bound: bounds) {
+        nbd[bound.variable] = bound.type;
+        if (bound.type == Bound<T>::types::LOWER || bound.type == Bound<T>::types::BOTH)
+            l[bound.variable] = bound.lower;
+        if (bound.type == Bound<T>::types::UPPER || bound.type == Bound<T>::types::BOTH)
+            u[bound.variable] = bound.upper;
     }
 
-    xOpt_ = x;
-    fMin_ = fx;
-    gradNorm_ = gnorm;
+    int *iwa = new int[3*n];
 
-    if (gradNorm_[k-1] > tol)
-        this->success_ = false;
+    double f, dsave[29];
+    double *g = new double[n];
+    std::cout << 2*m*n+5*n+11*m*m+8*m << std::endl;
+    double *wa = new double[2*m*n+5*n+11*m*m+8*m];
+
+    while (true) {
+        setulb_(&n, &m, x, l, u, nbd, &f, g, &decreaseFactor, &projectionTol, wa, iwa, task, &iprint, csave, lsave, isave, dsave, 60, 60, 4);
+        std::copy(x, x+n, x0.begin());
+
+        if (task[0] == 'F' && task[1] == 'G') {
+            /* Wants f and g for x */
+            f = func(x0);
+            auto temp = func.grad(x0);
+            std::copy(temp.begin(), temp.end(), g);
+        } else if (task[0] == 'N' && 
+                   task[1] == 'E' &&
+                   task[2] == 'W' &&
+                   task[3] == '_' &&
+                   task[4] == 'X') {
+            /* Any stopping criteria can go here; also note that you must set
+             * task[] to "STOP"
+             */
+        } else {
+            xOpt_.resize(n);
+            std::copy(x, x+n, xOpt_.begin());
+            fMin_ = f;
+            iters_ = isave[30];
+            if (task[0] == 'C' && 
+                task[1] == 'O' && 
+                task[2] == 'N' && 
+                task[3] == 'V')
+                success_ = true;
+            else success_ = false;
+            task[59] = 0;
+            std::cout << task << std::endl;
+
+            delete[] x;
+            delete[] nbd;
+            delete[] l;
+            delete[] u;
+            delete[] iwa;
+            delete[] g;
+            delete[] wa;
+            return;
+        }
+    }
 }
-
 
 /**
  * Get the optimum point.
@@ -118,15 +112,6 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, T tol, int maxItr) {
 template <typename T, typename F>
 inline std::vector<T> BFGS<T, F>::getOptValue() const {
     return xOpt_;
-}
-
-
-/**
- * Get the norm of gradient in each iteration.
- */
-template <typename T, typename F>
-inline std::vector<T> BFGS<T, F>::getGradNorm() const {
-    return gradNorm_;
 }
 
 
@@ -144,7 +129,7 @@ inline T BFGS<T, F>::getFuncMin() const {
  */
 template <typename T, typename F>
 inline int BFGS<T, F>::numIterations() const {
-    return gradNorm_.size() - 1;
+    return iters_;
 }
 
 #endif

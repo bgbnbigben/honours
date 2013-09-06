@@ -20,16 +20,20 @@ Swarm::Swarm(Function<double>* f, int n, int dim) : f_(f), number_(n), dimension
 
 void Swarm::setBests_() {
     double best = this->particles_[0]->getVal();
+    std::vector<double> velocity(this->dimension_);
     std::for_each(this->particles_.begin(), this->particles_.end(),
-        [this] (Particle* p) {
+        [this, &velocity] (Particle* p) {
             p->setVal((* this->f_)(p->pos()));
             RRect r(p->pos());
-            this->rtree_->Insert(r.min, r.max, p->getVal());
+            velocity += p->vel();
+            //this->rtree_->Insert(r.min, r.max, p->getVal());
     });
     std::sort(this->particles_.begin(), this->particles_.end(), ::compare);
     if (this->particles_[0]->getVal() > best)
         this->same_++;
     if (this->same_ > 100)
+        this->done_ = true;
+    if (norm(velocity) < 1.0)
         this->done_ = true;
 }
 
@@ -41,15 +45,14 @@ void Swarm::dance() {
     {
         std::for_each(this->particles_.begin(), this->particles_.end(),
             [&] (Particle*& i) {
-                i->step(best, this->c1, this->c2, this->momentum);
-                RRect r(i->pos());
-                centre += i->pos();
-                if (this->rtree_->Search(r.min, r.max, NULL, NULL))
-                    i->reload(i->pos()+.2, i->vel()+.2);
-
+                i->step(best, this->c1, this->c2, this->momentum, this->bounds_);
+            RRect r(i->pos());
+            centre += i->pos();
+            while (this->rtree_->Search(r.min, r.max, NULL, NULL))
+                i->reload(i->pos()+.2, i->vel()+.2);
         });
-        centre /= double(this->number_);
     }
+    centre /= double(this->number_);
     this->setBests_();
     RRect r(centre);
     if (this->rtree_->Search(r.min, r.max, NULL, NULL) > this->number_ / 2) {
