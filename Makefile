@@ -6,7 +6,7 @@ SRC=${SWARMSRC} main.cpp
 F=utilities/dgemm.o utilities/dgemv.o utilities/dger.o utilities/dgetf2.o utilities/dgetrf.o utilities/dgetri.o utilities/dlamch.o utilities/dlaswp.o utilities/dswap.o utilities/dtrmm.o utilities/dtrmv.o utilities/dtrsm.o utilities/dtrti2.o utilities/dtrtri.o utilities/idamax.o utilities/ieeeck.o utilities/ilaenv.o utilities/iparmq.o utilities/lsame.o utilities/xerbla.o
 OBJS=${SRC:.cpp=.o} ${F}
 EXE=particle
-CXXFLAGS=-std=c++0x -I. -Wall -Wextra -g -march=native -fopenmp -D_GLIBCXX_PARALLEL #-fsanitize=thread -fPIE
+CXXFLAGS=-std=c++0x -I. -I${HOME}/openmpi/env/include -Wall -Wextra -g -march=native -fopenmp -D_GLIBCXX_PARALLEL #-fsanitize=thread -fPIE
 LDFLAGS=-g -fopenmp -Llbfgsb -llbfgsb -lgfortran #-ltsan -fsanitize=thread -pie
 
 all: ${OBJS} ${PCH} fortran
