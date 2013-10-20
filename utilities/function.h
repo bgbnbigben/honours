@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <utilities/vector_ops.h>
 #include <random>
+#include <cassert>
 
 template <class T>
 class Function {
