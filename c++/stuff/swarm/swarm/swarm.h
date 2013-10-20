@@ -2,21 +2,18 @@
 #define SWARM_H
 #include <vector>
 #include <numeric>
-#include <utilities/RTree.h>
 #include <utilities/function.h>
 #include <utilities/bound.h>
+#include <spatialindex/SpatialIndex.h>
 
 class Particle;
 
 class Swarm {
         Function<double>* f_;
         unsigned number_;
-        // TODO Refactor this properly. All the templates.
         int dimension_;
-        const static int DIMS = 1024;
-        // <ID, data type, numDims>
-        // Use the id as the function value maybe?
-        RTree<double, double, DIMS>* rtree_;
+        SpatialIndex::IStorageManager* memoryStorage_;
+        SpatialIndex::ISpatialIndex* rtree_;
         bool done_;
         int same_;
         unsigned iterations_;
@@ -31,6 +28,7 @@ class Swarm {
 
     public:
         Swarm(Function<double>*, int, int, std::vector<Bound<double>>);
+        ~Swarm();
 
         void dance();
         double bestVal();
