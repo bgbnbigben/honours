@@ -207,11 +207,15 @@ int main(int argc, char* argv[]) {
                     bounds[i].upper = lower + (j+1)*(upper-lower) / (double)(splits+(partitions>0));
                 }
 
-                MPI::COMM_WORLD.Send(&bounds.front(), n, BoundType, current_proc++, BOUND_TAG);
+                //MPI::COMM_WORLD.Send(&bounds.front(), n, BoundType, current_proc++, BOUND_TAG);
+                MPI::Request req = MPI::COMM_WORLD.Isend(&bounds.front(), n, BoundType, current_proc++, BOUND_TAG);
             }
+            bounds[i].lower = lower;
+            bounds[i].upper = upper;
         }
     } else {
-        MPI::COMM_WORLD.Recv(&bounds.front(), n, BoundType, 0, BOUND_TAG);
+        MPI::Request req = MPI::COMM_WORLD.Irecv(&bounds.front(), n, BoundType, 0, BOUND_TAG); 
+        //MPI::COMM_WORLD.Recv(&bounds.front(), n, BoundType, 0, BOUND_TAG);
     }
     
     //Free up the type
