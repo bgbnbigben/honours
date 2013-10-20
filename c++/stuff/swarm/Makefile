@@ -37,8 +37,11 @@ fortran:
 	/usr/bin/g++-4.8 ${CXXFLAGS} $<
 
 clean:
+	$(MAKE) -C lbfgsb fullclean
 	rm -f ${OBJS} ${EXE}
-	$(MAKE) -C libspatialindex distclean
+	if [ -e ${TLD}/libspatialindex/Makefile ]; then \
+		$(MAKE) -C libspatialindex distclean; \
+	fi
 	rm -rf spatialindex/
 
 fullclean:
