@@ -2,7 +2,7 @@
 #define BFGS_H
 
 #include <utilities/bound.h>
-#include <bfgs/lbfgsh_prototypes.h>
+#include <bfgs/lbfgsb_prototypes.h>
 #include <cstring>
 
 template <typename T, typename F>
