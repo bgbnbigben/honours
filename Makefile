@@ -1,4 +1,6 @@
 TLD=${CURDIR}
+CC=$(shell which g++)
+MPICC=$(shell which mpicc)
 SWARMSRC=swarm/swarm.cpp swarm/particle.cpp swarm/neldermead.cpp 
 BFGSSRC=bfgs/bfgs.h bfgs/linesearch.h # bfgs_test.cpp
 UTILITYSRC=utilities/RTree.h utilities/rrect.h utilities/function.h utilities/tsqueue.h utilities/matrix.h utilities/vector_ops.h
@@ -12,29 +14,35 @@ LDFLAGS=-g -fopenmp -Llbfgsb -Lspatialindex/lib -llbfgsb -lgfortran -lspatialind
 
 .PHONY: all fortran libspatialindex clean fullclean archive
 
-all: libspatialindex ${OBJS} ${PCH} fortran
-	/usr/bin/g++-4.8 ${OBJS} -o ${EXE} ${LDFLAGS}
+all: fortran libspatialindex ${OBJS} ${PCH}
+	$(CC) ${OBJS} -o ${EXE} ${LDFLAGS}
 
-libspatialindex: ${TLD}/spatialindex/lib/libspatialindex.a
+libspatialindex: fortran ${TLD}/spatialindex/lib/libspatialindex.a
 
 ${TLD}/spatialindex/lib/libspatialindex.a:
 	mkdir -p spatialindex
 	if [ ! -e ${TLD}/libspatialindex/Makefile ]; then \
-		cd libspatialindex && ./configure --prefix=${TLD}/spatialindex; \
-	fi
+		if [ ! -e ${TLD}/libspatialindex/configure ]; then \
+			cd ${TLD}/libspatialindex && ./autogen.sh; \
+		fi; \
+		cd ${TLD}/libspatialindex && ./configure --prefix=${TLD}/spatialindex; \
+	fi;
 	$(MAKE) -C libspatialindex all install
 
 fortran:
 	$(MAKE) -C lbfgsb library 
 
+main.o: main.cpp
+	$(MPICC) ${CXXFLAGS} -c -o $@ $<
+
 %.o: %.cpp $(wildcard %.h)
-	/usr/bin/g++-4.8 ${CXXFLAGS} -c -o $@ $<
+	$(CC) ${CXXFLAGS} -c -o $@ $<
 
 %.o: %.f
 	gfortran -O3 -Wall -fbounds-check -Wno-uninitialized -c $< -o $@	
 
 %.gch: %
-	/usr/bin/g++-4.8 ${CXXFLAGS} $<
+	$(CC) ${CXXFLAGS} $<
 
 clean:
 	$(MAKE) -C lbfgsb fullclean
