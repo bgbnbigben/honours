@@ -1,3 +1,5 @@
 *.o
 particle
+*.a
+*.so
 *.gch
