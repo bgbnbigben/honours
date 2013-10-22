@@ -108,6 +108,23 @@ void invalidInvocation() {
     exit(0);
 }
 
+void producePartition(vector<Bound<double>> bounds, unsigned depth, unsigned requiredPartitions) {
+    if (requiredPartitions == 1) {
+        b.push_back(bounds);
+        return;
+    }
+    assert(depth <= bounds.size());
+    int n; for (n = 2; n < 10000; n++) if (requiredPartitions - pow(std::pow(n, depth), (bounds.size() - (depth - 1))) <= 0) break;
+    int extraPartitions = requiredPartitions - n * (requiredPartitions / n);
+    requiredPartitions /= (n+extraPartitions);
+    for (int i = 0; i < n + extraPartitions; i++) {
+        auto newBounds = bounds;
+        newBounds[depth-1].lower = bounds[depth-1].lower + (i) * (bounds[depth-1].upper - bounds[depth-1].lower) / (double)(n + extraPartitions);
+        newBounds[depth-1].upper = bounds[depth-1].lower + (i + 1)*(bounds[depth-1].upper - bounds[depth-1].lower) / (double)(n + extraPartitions);
+        producePartition(newBounds, depth+1, requiredPartitions);
+    }
+}
+
 int main(int argc, char* argv[]) {
     char* end = 0;
     int numprocs, rank;
@@ -188,34 +205,13 @@ int main(int argc, char* argv[]) {
                 bounds[i].lower = left;
                 bounds[i].upper = right;
             }
-        int splits = partitions/n;
-        int remainder = partitions - splits*n;
-
-        int current_proc = 1;
-        for (int i = 0; i < n; i++, remainder--) {
-            // need to divide bound[i] up into splits+remainder partitions.
-            double lower = bounds[i].lower, upper = bounds[i].upper;
-            for (int j = 0; j < splits + (partitions > 0); j++) {
-                if (j == 0) {
-                    bounds[i].lower = lower;
-                } else {
-                    bounds[i].lower = lower + (j)*(upper-lower) / (double)(splits+(partitions>0));
-                }
-                if (j == splits - 1) {
-                    bounds[i].upper = upper;
-                } else {
-                    bounds[i].upper = lower + (j+1)*(upper-lower) / (double)(splits+(partitions>0));
-                }
-
-                //MPI::COMM_WORLD.Send(&bounds.front(), n, BoundType, current_proc++, BOUND_TAG);
-                MPI::Request req = MPI::COMM_WORLD.Isend(&bounds.front(), n, BoundType, current_proc++, BOUND_TAG);
+        producePartitions(bounds, 1, partitions);
+        # pragma omp parallel for
+            for (unsigned i = 0; i < globalPartitions.size(); i++) {
+                MPI::Request req = MPI::COMM_WORLD.Isend(&bounds.front(), n, BoundType, current_proc++ % num_procs, BOUND_TAG);
             }
-            bounds[i].lower = lower;
-            bounds[i].upper = upper;
-        }
     } else {
         MPI::Request req = MPI::COMM_WORLD.Irecv(&bounds.front(), n, BoundType, 0, BOUND_TAG); 
-        //MPI::COMM_WORLD.Recv(&bounds.front(), n, BoundType, 0, BOUND_TAG);
     }
     
     //Free up the type
@@ -237,12 +233,11 @@ int main(int argc, char* argv[]) {
     std::cout.precision(10);
     while (!swarm.done()) {
         swarm.dance();
-        std::cout << "Best in swarm: " << swarm.bestVal() << std::endl;
-        std::cout << "Best so far: " << bestF << std::endl;
         if (bestF > swarm.bestVal())
             bestF = swarm.bestVal();
+        std::cout << bestF << " ";
     }
-    std::cout << "Swarm took us to " << swarm.bestX() << std::endl;
+    std::cout << "\nSwarm took us to " << swarm.bestX() << std::endl;
     q.push(swarm.bestX());
 
     while (!q.empty()) {
