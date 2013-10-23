@@ -1,10 +1,10 @@
 TLD=${CURDIR}
 CC=$(shell which g++)
-MPICC=$(shell which mpicc)
+MPICC=$(shell which mpic++)
 SWARMSRC=swarm/swarm.cpp swarm/particle.cpp swarm/neldermead.cpp 
 BFGSSRC=bfgs/bfgs.h bfgs/linesearch.h # bfgs_test.cpp
 UTILITYSRC=utilities/RTree.h utilities/rrect.h utilities/function.h utilities/tsqueue.h utilities/matrix.h utilities/vector_ops.h
-PCH=utilities/vector_ops.h.gch utilities/matrix.h.gch utilities/tsqueue.h.gch
+PCH=utilities/vector_ops.h.gch utilities/matrix.h.gch utilities/tsqueue.h.gch utilities/RTreeUtilities.h.gch
 SRC=${SWARMSRC} main.cpp
 F=utilities/dgemm.o utilities/dgemv.o utilities/dger.o utilities/dgetf2.o utilities/dgetrf.o utilities/dgetri.o utilities/dlamch.o utilities/dlaswp.o utilities/dswap.o utilities/dtrmm.o utilities/dtrmv.o utilities/dtrsm.o utilities/dtrti2.o utilities/dtrtri.o utilities/idamax.o utilities/ieeeck.o utilities/ilaenv.o utilities/iparmq.o utilities/lsame.o utilities/xerbla.o
 OBJS=${SRC:.cpp=.o} ${F}
@@ -15,7 +15,7 @@ LDFLAGS=-g -fopenmp -Llbfgsb -Lspatialindex/lib -llbfgsb -lgfortran -lspatialind
 .PHONY: all fortran libspatialindex clean fullclean archive
 
 all: fortran libspatialindex ${OBJS} ${PCH}
-	$(CC) ${OBJS} -o ${EXE} ${LDFLAGS}
+	$(MPICC) ${OBJS} -o ${EXE} ${LDFLAGS}
 
 libspatialindex: fortran ${TLD}/spatialindex/lib/libspatialindex.a
 
