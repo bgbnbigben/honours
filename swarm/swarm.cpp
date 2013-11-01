@@ -9,7 +9,7 @@ const double hyperrect_size = 0.5;
 
 namespace {
     bool compare(Particle* a, Particle* b) { return a->getVal() < b->getVal();}
-    bool boundCompare(const Bound<double>& a, const Bound<double>& b) { return a.variable < b.variable; }
+    bool boundCompare(const Bound<double> a, const Bound<double> b) { return a.variable < b.variable; }
 };
 
 Swarm::Swarm(Function<double>* f, int n, int dim, std::vector<Bound<double>> bounds) : f_(f), number_(n), dimension_(dim), done_(false), same_(0), iterations_(0), bounds_(bounds) {
