@@ -21,8 +21,6 @@ constexpr double NelderMead::gamma;
 constexpr double NelderMead::rho;
 constexpr double NelderMead::sigma;
 
-MPI::Datatype BoundType;
-std::vector<std::vector<Bound<double>>> globalPartitions;
 int current_proc;
 int numprocs;
 
@@ -119,7 +117,6 @@ void invalidInvocation() {
 void producePartitions(std::vector<Bound<double>> bounds, unsigned depth, unsigned requiredPartitions) {
     if (requiredPartitions == 1) {
         /* TODO wait for this to buffer */
-        globalPartitions.push_back(bounds);
         std::cout << "Pushing vector to " << ((current_proc + 1) % (numprocs - 1)) + 1 << std::endl;
         std::cout << "Sending " << sizeof(bounds[0])*bounds.size() << " of size " << sizeof(MPI::CHAR) << std::endl;
         MPI::Request req = MPI::COMM_WORLD.Isend(&bounds.front(), bounds.size()*sizeof(bounds[0]), MPI::CHAR, (current_proc++ % (numprocs - 1)) + 1, BOUND_TAG);
@@ -186,31 +183,6 @@ int main(int argc, char* argv[]) {
     }
     bounds.reserve(n);
     bounds.resize(n);
-
-    // http://stackoverflow.com/a/16747896/699674
-    const int    nItems=4;
-    int          blocklengths[nItems] = {1, 1, 1, 1};
-    MPI::Datatype types[nItems] = {MPI::DOUBLE, MPI::DOUBLE, MPI::LONG, MPI::INT};
-    MPI::Aint     offsets[nItems];
-
-    offsets[0] = offsetof(Bound<double>, lower);
-    offsets[1] = offsetof(Bound<double>, upper);
-    offsets[2] = offsetof(Bound<double>, type);
-    offsets[3] = offsetof(Bound<double>, variable);
-
-    MPI::Datatype BoundTypeProto = MPI::Datatype::Create_struct(nItems, blocklengths, offsets, types);
-
-    // Get the constructed type lower bound and extent
-    MPI::Aint lb, extent;
-    BoundTypeProto.Get_extent(lb, extent);
-
-    // Get the actual distance between to vector elements
-    // (this might not be the best way to do it - if so, substitute a better one)
-    extent = (char*)&bounds[1] - (char*)&bounds[0];
-
-    // Create a resized type whose extent matches the actual distance
-    BoundType = BoundTypeProto.Create_resized(lb, extent);
-    BoundType.Commit();
 
     if (rank == 0) {
         current_proc = 1;
@@ -307,9 +279,6 @@ int main(int argc, char* argv[]) {
     //__gnu_parallel::_Settings s;
     //s.algorithm_strategy = __gnu_parallel::force_parallel;
     //__gnu_parallel::_Settings::set(s);
-
-    //Free up the type
-    BoundType.Free();
 
     MPI::Finalize();
     return 0;
