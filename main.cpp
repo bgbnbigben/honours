@@ -115,6 +115,11 @@ void invalidInvocation() {
 }
 
 void producePartitions(std::vector<Bound<double>> bounds, unsigned depth, unsigned requiredPartitions) {
+    if (depth == 1) 
+        for (unsigned i = 0; i < bounds.size(); i++) {
+            bounds[i].variable = i;
+            bounds[i].type = Bound<double>::BOTH;
+        }
     if (requiredPartitions == 1) {
         /* TODO wait for this to buffer */
         std::cout << "Pushing vector to " << ((current_proc + 1) % (numprocs - 1)) + 1 << std::endl;
