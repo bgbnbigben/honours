@@ -13,6 +13,10 @@
 #include <bfgs/bfgs.h>
 #include <optionparser.h>
 #include <mpi.h>
+#include <csignal>
+#include <chrono>
+#include <pstream.h>
+#include <string>
 
 #define BOUND_TAG 0x626f756e
 #define DIE_TAG 0xd1ed1e
@@ -33,13 +37,11 @@ struct Arg : public option::Arg {
     }
 
     static option::ArgStatus Unknown(const option::Option& option, bool msg) {
-        std::cout << "UNKNOWN CALLED" << std::endl;
         if (msg) printError("Unknown option '", option, "'\n");
         return option::ARG_ILLEGAL;
     }
 
     static option::ArgStatus Required(const option::Option& option, bool msg) {
-        std::cout << option.arg << " LKSJHDFLKJSHDLFKJ" << std::endl;
         if (option.arg != 0)
             return option::ARG_OK;
 
@@ -65,6 +67,11 @@ struct Arg : public option::Arg {
         return option::ARG_ILLEGAL;
     }
 
+    static option::ArgStatus String(const option::Option&, bool) {
+        /* By default everything is a string.... */
+        return option::ARG_OK;
+    }
+
     static option::ArgStatus Integer(const option::Option& option, bool msg) {
         char* endptr = 0;
         auto inter = std::bind(strtol, std::placeholders::_1, std::placeholders::_2, 10);
@@ -81,22 +88,37 @@ struct Arg : public option::Arg {
     }
 };
 
-enum optionIndex { UNKNOWN, HELP, NUM, DIM, BOUND, PARTITIONS, NONEMPTY };
+enum optionIndex { UNKNOWN, HELP, NUM, DIM, BOUND, PARTITIONS, NONEMPTY, SIF, NAME };
 const option::Descriptor usage[] = {
     { UNKNOWN, 0, "", "", Arg::Unknown, "USAGE: ./particle [options]\n\n"
                                         "Options: "},
     { HELP, 0, "h", "help", Arg::None,  "  \t-h|--help \tPrint usage and exit."
                                                    },
-    { BOUND, 0, "l", "left-window", Arg::Numeric, " \t-l|--left-window "
-                             "<double> the left window of the search space."
-                             " This will be considered a hard bound." },
-    { BOUND, 0, "r", "right-window", Arg::Numeric, " \t-r|--right-window "
-                             "<double> the right window of the search space."
-                             " This will be considered a hard bound." },
     { NUM, 0, "n", "num", Arg::Integer, " \t-n|--num <int> the number of"
                                         " particles in the swarm." },
+    { BOUND, 0, "l", "left-window", Arg::Numeric, " \t-l|--left-window "
+                             "<double> the left window of the search space."
+                             " This will be considered a hard bound. This"
+                             " argument is ignored if using a problem from"
+                             " CUTEst." },
+    { BOUND, 0, "r", "right-window", Arg::Numeric, " \t-r|--right-window "
+                             "<double> the right window of the search space."
+                             " This will be considered a hard bound. This"
+                             " argument is ignored if using a problem from"
+                             " CUTEst." },
     { DIM, 0, "d", "dim", Arg::Integer, " \t-d|--dim <int> the dimension of"
-                                        " the problem to be solved." },
+                                        " the problem to be solved. This" 
+                                        " argument is ignored if using a"
+                                        " problem from CUTEst." },
+    { NAME, 0, "a", "name", Arg::String, " \t-a|--name <name> the name of the"
+                                         " (C++) function to optimise on."
+                                         " Current valid options are "
+                                         " 'Paraboloid' or 'Rosenbrock'." },
+    { SIF, 0, "s", "sif", Arg::String, " \t-s|--sif <name> the name of the SIF"
+                                       " file to test with, from the CUTEst"
+                                       " dataset. Your environment must be set"
+                                       " up properly for this argument to work."
+    },
     { PARTITIONS, 0, "p", "partitions", Arg::OptionalInteger,
         " \t-p|--partitions <int> The number of partitions to split the search"
         " space into. The more partitions, the higher the probability of "
@@ -122,8 +144,6 @@ void producePartitions(std::vector<Bound<double>> bounds, unsigned depth, unsign
         }
     if (requiredPartitions == 1) {
         /* TODO wait for this to buffer */
-        std::cout << "Pushing vector to " << ((current_proc + 1) % (numprocs - 1)) + 1 << std::endl;
-        std::cout << "Sending " << sizeof(bounds[0])*bounds.size() << " of size " << sizeof(MPI::CHAR) << std::endl;
         MPI::Request req = MPI::COMM_WORLD.Isend(&bounds.front(), bounds.size()*sizeof(bounds[0]), MPI::CHAR, (current_proc++ % (numprocs - 1)) + 1, BOUND_TAG);
         return;
     }
@@ -140,6 +160,7 @@ void producePartitions(std::vector<Bound<double>> bounds, unsigned depth, unsign
 }
 
 int main(int argc, char* argv[]) {
+    auto start = std::chrono::high_resolution_clock::now();
     MPI::Init(argc, argv);
     char* end = 0;
     int rank;
@@ -153,7 +174,6 @@ int main(int argc, char* argv[]) {
     rank = MPI::COMM_WORLD.Get_rank();
     MPI::COMM_WORLD.Set_errhandler(MPI::ERRORS_ARE_FATAL);
 
-
     argv += (argc > 0);
     argc -= (argc > 0);
 
@@ -165,12 +185,41 @@ int main(int argc, char* argv[]) {
     if (parse.error())
         return 1;
 
-    n = strtol(options[NUM].arg, &end, 10);
-    dim = strtol(options[DIM].arg, &end, 10);
-
-    if (options[HELP] || argc == 0 || options[BOUND].count() != 2 || !options[NUM].count() || !options[DIM].count()) {
+    if (options[HELP] || argc == 0 || !options[NUM].count() || ((options[BOUND].count() != 2 || !options[DIM].count()) && options[NAME]) || !options[SIF]) {
         invalidInvocation();
     }
+
+    if (rank == 0) {
+        if (options[SIF]) {
+            std::string output;
+            std::string decodeCommand("source /home/bgbnbigben/.bashrc && mkdir -p tmp && cd tmp && sifdecoder {probname}.SIF");
+            decodeCommand = decodeCommand.replace(decodeCommand.find("{probname}"), 10, options[SIF].arg);
+            redi::pstream decoder(decodeCommand);
+            while (std::getline(decoder, output))
+                std::cout << output << std::endl;
+
+            redi::pstream ld("echo $LD_LIBRARY_PATH");
+            while (std::getline(ld, output))
+                std::cout << output << std::endl;
+
+            // I don't even give a shit if this isn't portable
+            redi::pstream fortran_compiler("cd tmp && for i in *.f; do gfortran -c $i; done");
+            redi::pstream global_compiler("g++ -O3 interface/interface_cuter.o $CUTEST/objects/pc64.lnx.gfo/double/libcutest.a -lgfortran *.o -o bbox");
+            while (std::getline(fortran_compiler, output))
+                std::cout << output << std::endl;
+            while (std::getline(global_compiler, output))
+                std::cout << output << std::endl;
+        } else {
+            n = strtol(options[NUM].arg, &end, 10);
+        }
+        MPI::COMM_WORLD.Bcast(&n, 1, MPI::INT, 0);
+    } else {
+        MPI::COMM_WORLD.Recv(&n, 1, MPI::INT, 0, MPI::ANY_TAG);
+    }
+
+    MPI::Finalize();
+    return 0;
+    dim = strtol(options[DIM].arg, &end, 10);
 
     if (rank == 0) {
         /* Divide up work, set bounds, etc. */
@@ -196,24 +245,22 @@ int main(int argc, char* argv[]) {
                 bounds[i].lower = left;
                 bounds[i].upper = right;
             }
-        std::cout << "Attempting to send partitions " << std::endl;
         producePartitions(bounds, 1, partitions);
-        std::cout << "Partitions sent!" << std::endl;
+        std::cout << "Pushed all bounds!" << std::endl;
         # pragma omp parallel for
             for (int i = 1; i < numprocs; i++) {
                 MPI::COMM_WORLD.Send(&bounds.front(), n*sizeof(bounds[0]), MPI::CHAR, i, DIE_TAG);
             }
-        std::cout << "Told all the processors to die" << std::endl;
         int counter = 0;
         double globalBest = std::numeric_limits<double>::max();
         std::vector<double> globalSoln(dim);
-        while (counter < numprocs - 1) {
+        while (counter < partitions) {
             MPI::Status stat;
             double candidateBest;
             std::vector<double> candidateSoln(dim);
             std::cout << "Prepared to receive a best solution" << std::endl;
             MPI::COMM_WORLD.Recv(&candidateBest, 1, MPI::DOUBLE, MPI::ANY_SOURCE, MPI::ANY_TAG, stat);
-            std::cout << "Recieved the candidate best" << std::endl;
+            std::cout << "Received the candidate best from processor " << stat.Get_source() << std::endl;
             MPI::COMM_WORLD.Recv(&candidateSoln.front(), dim, MPI::DOUBLE, stat.Get_source(), MPI::ANY_TAG);
             std::cout << "Received the candidate solution " << candidateBest << " with an associated xval" << std::endl;
 
@@ -286,5 +333,16 @@ int main(int argc, char* argv[]) {
     //__gnu_parallel::_Settings::set(s);
 
     MPI::Finalize();
+    std::cout << std::flush;
+    if (rank == 0) {
+        auto end = std::chrono::high_resolution_clock::now();
+        std::cout << "Execution took " << std::chrono::duration_cast<std::chrono::hours>(end - start).count() << "h"
+                                       << std::chrono::duration_cast<std::chrono::minutes>(end - start).count() << "m"
+                                       << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << "s"
+                                       << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms"
+                                       << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us"
+                                       << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns";
+        redi::pstream rm("rm -rf tmp/");
+    }
     return 0;
 }

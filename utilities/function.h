@@ -5,6 +5,7 @@
 #include <utilities/vector_ops.h>
 #include <random>
 #include <cassert>
+#include <pstream.h>
 
 template <class T>
 class Function {
@@ -96,5 +97,40 @@ class Rosenbrock : public Function<T> {
             assert(norm(df - df2) <= 1);
             return df;
         }   
+};
+
+template <class T>
+class CUTEst : public Function<T> {
+    private:
+        redi::pstream blackbox;
+        void primeBlackBox(const std::vector<T> &x) {
+            this->blackbox = redi::pstream("tmp/bbox");
+            for (unsigned i = 0; i < x.size(); i++)
+                this->blackbox >> x[i];
+        }
+    public:
+        CUTEst() : Function<T>() {};
+
+        T operator() (const std::vector<T> &x) {
+            this->calls_++;
+            this->primeBlackBox();
+            std::string line, _;
+            getline(this->blackbox, line);
+            getline(this->blackbox, _, '\0');
+            return (T)std::stold(line);
+        }
+
+        std::vector<T> grad(const std::vector<T> &x) {
+            this->grads_++;
+            this->primeBlackBox();
+            std::vector<T> ret(x.size());
+            unsigned ctr = 0;
+            std::string line, _;
+            getline(this->blackbox, _);
+            while (getline(this->blackbox, line))
+                ret[ctr++] = (T)std::stold(line);
+
+            return ret;
+        }
 };
 #endif

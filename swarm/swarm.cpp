@@ -4,6 +4,9 @@
 #include <utilities/vector_ops.h>
 #include <utilities/RTreeUtilities.h>
 #include <algorithm>
+#include <unistd.h>
+#include <iostream>
+#include <fstream>
 
 const double hyperrect_size = 0.5;
 

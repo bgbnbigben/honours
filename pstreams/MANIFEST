@@ -1,0 +1,13 @@
+pstreams-0.8.0/pstream.h
+pstreams-0.8.0/ChangeLog
+pstreams-0.8.0/MANIFEST
+pstreams-0.8.0/AUTHORS
+pstreams-0.8.0/COPYING.LIB
+pstreams-0.8.0/Doxyfile
+pstreams-0.8.0/INSTALL
+pstreams-0.8.0/Makefile
+pstreams-0.8.0/README
+pstreams-0.8.0/mainpage.html
+pstreams-0.8.0/test_pstreams.cc
+pstreams-0.8.0/test_minimum.cc
+pstreams-0.8.0/pstreams-devel.spec
