@@ -3,3 +3,6 @@ particle
 *.a
 *.so
 *.gch
+tmp/
+spatialindex/
+iterate.dat
