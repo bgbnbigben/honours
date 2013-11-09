@@ -5,7 +5,7 @@
 #include <utilities/vector_ops.h>
 #include <random>
 #include <cassert>
-#include <pstream.h>
+#include <cutest.h>
 
 template <class T>
 class Function {
@@ -102,35 +102,117 @@ class Rosenbrock : public Function<T> {
 template <class T>
 class CUTEst : public Function<T> {
     private:
-        redi::pstream blackbox;
-        void primeBlackBox(const std::vector<T> &x) {
-            this->blackbox = redi::pstream("tmp/bbox");
-            for (unsigned i = 0; i < x.size(); i++)
-                this->blackbox >> x[i];
-        }
+        int nVar_;
+        int nConstraints_;
+        T *x_l, *x_u;
+
+    protected:
+        bool constrained_;
     public:
-        CUTEst() : Function<T>() {};
+        CUTEst() : Function<T>(), constrained_(false) {
+            char* fname = "tmp/OUTSDIF.d"; /* CUTEst data file */
+            int funit = 42;        /* FORTRAN unit number for OUTSDIF.d */
+            int iout  = 6;         /* FORTRAN unit number for error output */
+            int io_buffer = 11;    /* Internal input/output buffer */
+            int ierr;              /* Exit flag for various calls */
+
+            double *x; /* position, lower bound, upper bound */
+            double *y = NULL, *y_l = NULL, *y_u = NULL;
+            bool *equatn = NULL, *linear = NULL;
+            int eqn_order = 0, l_order = 0, v_order = 0;
+
+            /* Open problem description file OUTSDIF.d */
+            ierr = 0;
+            FORTRAN_open(&funit, fname, &ierr);
+            if (ierr) {
+                /* work it out later */
+            }
+            /* Determine problem size */
+            CUTEST_cdimen(&ierr, &funit, &this->nVar_, &this->nConstraints_);
+            if (ierr) {
+                /* work it out later */
+            }
+            /* Determine whether to call constrained or unconstrained tools */
+            if (this->nConstraints_) this->constrained_ = true;
+            x = new double[this->nVar_];
+            x_l = new T[this->nVar_];
+            x_u = new T[this->nVar_];
+            if (this->constrained_) {
+                equatn = new bool[this->nConstraints_+1];
+                linear = new bool[this->nConstraints_+1];
+                y = new double[this->nConstraints_+1];
+                y_l = new double[this->nConstraints_+1];
+                y_u = new double[this->nConstraints_+1];
+                CUTEST_csetup(&ierr, &funit, &iout, &io_buffer,
+                        &this->nVar_, &this->nConstraints_,
+                        x, x_l, x_u, y, y_l, y_u,
+                        equatn, linear, &eqn_order, &l_order, &v_order);
+                if (ierr) {
+                    /* work it out later */
+                }
+            } else {
+                equatn = new bool[1];
+                linear = new bool[1];
+                y_l = new double[1];
+                y_u = new double[1];
+                CUTEST_usetup(&ierr, &funit, &iout, &io_buffer,
+                        &this->nVar_, x, x_l, x_u);
+                if (ierr) {
+                    /* work it out later */
+                }
+            }
+            FORTRAN_close(&funit, &ierr);
+            delete[] x;
+            delete[] y;
+            delete[] y_l;
+            delete[] y_u;
+            delete[] equatn;
+            delete[] linear;
+        }
 
         T operator() (const std::vector<T> &x) {
             this->calls_++;
-            this->primeBlackBox();
-            std::string line, _;
-            getline(this->blackbox, line);
-            getline(this->blackbox, _, '\0');
-            return (T)std::stold(line);
+            T* grad = NULL;
+            T obj;
+            int ierr;
+            if (this->constrained_) {
+                logical a = false;
+                CUTEST_cofg(&ierr, &this->nVar_, const_cast<T*>(&x.front()), &obj, grad, &a);
+            } else {
+                logical a = false;
+                CUTEST_uofg(&ierr, &this->nVar_, const_cast<T*>(&x.front()), &obj, grad, &a);
+            }
+            return obj;
         }
 
         std::vector<T> grad(const std::vector<T> &x) {
             this->grads_++;
-            this->primeBlackBox();
-            std::vector<T> ret(x.size());
-            unsigned ctr = 0;
-            std::string line, _;
-            getline(this->blackbox, _);
-            while (getline(this->blackbox, line))
-                ret[ctr++] = (T)std::stold(line);
+            std::vector<T> grad(this->nVar_);
+            T obj;
+            int ierr;
+            if (this->constrained_) {
+                logical a = false;
+                CUTEST_cofg(&ierr, &this->nVar_, const_cast<T*>(&x.front()), &obj, &grad.front(), &a);
+            } else {
+                logical a = false;
+                CUTEST_uofg(&ierr, &this->nVar_, const_cast<T*>(&x.front()), &obj, &grad.front(), &a);
+            }
+            return grad;
+        }
 
-            return ret;
+        ~CUTEst() {
+            delete[] x_l;
+            delete[] x_u;
+        }
+
+        const int getDim() { return this->nVar_; }
+
+        const std::vector<T> getLowerBounds() {
+            return std::vector<T>(x_l, x_l + this->nVar_);
+        }
+
+        const std::vector<T> getUpperBounds() {
+            return std::vector<T>(x_u, x_u + this->nVar_);
         }
 };
 #endif

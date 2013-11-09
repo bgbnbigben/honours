@@ -17,6 +17,10 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef CUTEST_DOT_H_INCLUDED
 #define CUTEST_DOT_H_INCLUDED
 #endif
@@ -312,3 +316,6 @@ void  CUTEst_free( void **object );
 #define FREE(object) CUTEst_free((void **)(&(object)))
 #endif
 
+#ifdef __cplusplus
+}
+#endif

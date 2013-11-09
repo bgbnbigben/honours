@@ -1,3 +1,7 @@
+/* N.B. This code assumes there are at most as many bounds as particles in the
+ * swarm.
+ * This assumption is fucked
+ */
 #include <iostream>
 #include <iomanip>
 //#include <parallel/algorithm>
@@ -15,7 +19,6 @@
 #include <mpi.h>
 #include <csignal>
 #include <chrono>
-#include <pstream.h>
 #include <string>
 
 #define BOUND_TAG 0x626f756e
@@ -185,71 +188,75 @@ int main(int argc, char* argv[]) {
     if (parse.error())
         return 1;
 
-    if (options[HELP] || argc == 0 || !options[NUM].count() || ((options[BOUND].count() != 2 || !options[DIM].count()) && options[NAME]) || !options[SIF]) {
+    if (options[HELP] || argc == 0 || !options[NUM].count() || ((options[BOUND].count() != 2 || !options[DIM].count()) && options[NAME]) || (!options[SIF] && !options[NAME])) {
         invalidInvocation();
     }
 
-    if (rank == 0) {
-        if (options[SIF]) {
-            std::string output;
-            std::string decodeCommand("source /home/bgbnbigben/.bashrc && mkdir -p tmp && cd tmp && sifdecoder {probname}.SIF");
-            decodeCommand = decodeCommand.replace(decodeCommand.find("{probname}"), 10, options[SIF].arg);
-            redi::pstream decoder(decodeCommand);
-            while (std::getline(decoder, output))
-                std::cout << output << std::endl;
+    Function<double>* testFunction;
+    BFGS<double> bfgs;
 
-            redi::pstream ld("echo $LD_LIBRARY_PATH");
-            while (std::getline(ld, output))
-                std::cout << output << std::endl;
-
-            // I don't even give a shit if this isn't portable
-            redi::pstream fortran_compiler("cd tmp && for i in *.f; do gfortran -c $i; done");
-            redi::pstream global_compiler("g++ -O3 interface/interface_cuter.o $CUTEST/objects/pc64.lnx.gfo/double/libcutest.a -lgfortran *.o -o bbox");
-            while (std::getline(fortran_compiler, output))
-                std::cout << output << std::endl;
-            while (std::getline(global_compiler, output))
-                std::cout << output << std::endl;
-        } else {
-            n = strtol(options[NUM].arg, &end, 10);
+    if (options[SIF]) {
+        testFunction = new CUTEst<double>();
+        {
+            auto start = std::chrono::high_resolution_clock::now();
+            std::cout << "(1.2, -1) = " << testFunction->operator()({1.2, -1}) << " and (1, 1) = " << testFunction->operator()({1, 1}) << std::endl;
+            auto end = std::chrono::high_resolution_clock::now();
+            std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns";
         }
-        MPI::COMM_WORLD.Bcast(&n, 1, MPI::INT, 0);
+        dim = (reinterpret_cast<CUTEst<double>*>(testFunction))->getDim();
+        if (rank == 0) {
+            bounds.reserve(dim);
+            bounds.resize(dim);
+            auto lower = (reinterpret_cast<CUTEst<double>*>(testFunction))->getLowerBounds();
+            auto upper = (reinterpret_cast<CUTEst<double>*>(testFunction))->getUpperBounds();
+            for (int i = 0; i < dim; i++) {
+                bounds[i].lower = lower[i];
+                bounds[i].upper = upper[i];
+                std::cout << "Set x_" << i << " to " << lower[i] << " " << upper[i] << std::endl;
+            }
+        }
     } else {
-        MPI::COMM_WORLD.Recv(&n, 1, MPI::INT, 0, MPI::ANY_TAG);
+        dim = strtol(options[DIM].arg, &end, 10);
+        if (rank == 0) {
+            /* Divide up work, set bounds, etc. */
+            left = strtod(options[BOUND].arg, &end);
+            right = strtod(options[BOUND].next()->arg, &end);
+            if (std::isinf(left)  || std::isnan(left) ||
+                std::isinf(right) || std::isnan(right))
+                invalidInvocation();
+            bounds.reserve(dim);
+            bounds.resize(dim);
+            # pragma omp parallel for
+                for (int i = 0; i < dim; i++) {
+                    bounds[i].lower = left;
+                    bounds[i].upper = right;
+                }
+        }
+        if (std::string(options[NAME].arg) == "Rosenbrock")
+            testFunction = new Rosenbrock<double>();
+        if (std::string(options[NAME].arg) == "Paraboloid")
+            testFunction = new Paraboloid<double>();
     }
+    if (!options[PARTITIONS])
+        partitions = 2*numprocs;
+    else
+        partitions = strtol(options[PARTITIONS].arg, &end, 10);
 
-    MPI::Finalize();
-    return 0;
-    dim = strtol(options[DIM].arg, &end, 10);
+    if (rank != 0)
+        bounds.reserve(dim);
+        bounds.resize(dim);
 
-    if (rank == 0) {
-        /* Divide up work, set bounds, etc. */
-        left = strtod(options[BOUND].arg, &end);
-        right = strtod(options[BOUND].next()->arg, &end);
-        if (!options[PARTITIONS])
-            partitions = 2*numprocs;
-        else
-            partitions = strtol(options[PARTITIONS].arg, &end, 10);
-
-        if (std::isinf(left)  || std::isnan(left) ||
-            std::isinf(right) || std::isnan(right))
-            invalidInvocation();
-
-    }
-    bounds.reserve(n);
-    bounds.resize(n);
+    n = strtol(options[NUM].arg, &end, 10);
+    n = std::min(n, dim);
+    std::cout << "There will be " << n << "particles" << std::endl;
 
     if (rank == 0) {
         current_proc = 1;
-        # pragma omp parallel for
-            for (int i = 0; i < n; i++) {
-                bounds[i].lower = left;
-                bounds[i].upper = right;
-            }
         producePartitions(bounds, 1, partitions);
-        std::cout << "Pushed all bounds!" << std::endl;
+        std::clog << "Pushed all bounds!" << std::endl;
         # pragma omp parallel for
             for (int i = 1; i < numprocs; i++) {
-                MPI::COMM_WORLD.Send(&bounds.front(), n*sizeof(bounds[0]), MPI::CHAR, i, DIE_TAG);
+                MPI::COMM_WORLD.Send(&bounds.front(), dim*sizeof(bounds[0]), MPI::CHAR, i, DIE_TAG);
             }
         int counter = 0;
         double globalBest = std::numeric_limits<double>::max();
@@ -258,11 +265,11 @@ int main(int argc, char* argv[]) {
             MPI::Status stat;
             double candidateBest;
             std::vector<double> candidateSoln(dim);
-            std::cout << "Prepared to receive a best solution" << std::endl;
+            std::clog << "Prepared to receive a best solution" << std::endl;
             MPI::COMM_WORLD.Recv(&candidateBest, 1, MPI::DOUBLE, MPI::ANY_SOURCE, MPI::ANY_TAG, stat);
-            std::cout << "Received the candidate best from processor " << stat.Get_source() << std::endl;
+            std::clog << "Received the candidate best from processor " << stat.Get_source() << std::endl;
             MPI::COMM_WORLD.Recv(&candidateSoln.front(), dim, MPI::DOUBLE, stat.Get_source(), MPI::ANY_TAG);
-            std::cout << "Received the candidate solution " << candidateBest << " with an associated xval" << std::endl;
+            std::clog << "Received the candidate solution " << candidateBest << " with an associated xval" << std::endl;
 
             if (candidateBest < globalBest) {
                 globalBest = candidateBest;
@@ -275,14 +282,12 @@ int main(int argc, char* argv[]) {
     } else {
         MPI::Status status;
         while (true) {
-            MPI::COMM_WORLD.Recv(&bounds.front(), n*sizeof(Bound<double>), MPI::CHAR, 0, MPI::ANY_TAG, status); 
-            std::cout << "Processor " << rank << " has received " << n*sizeof(Bound<double>) << " bytes worth of bounds" << std::endl;
+            MPI::COMM_WORLD.Recv(&bounds.front(), dim*sizeof(Bound<double>), MPI::CHAR, 0, MPI::ANY_TAG, status); 
+            std::clog << "Processor " << rank << " has received " << dim*sizeof(Bound<double>) << " bytes worth of bounds" << std::endl;
             if (status.Get_tag() == DIE_TAG) break;
 
             tsqueue<std::vector<double>> q;
-            Rosenbrock<double> testFunction;
-            BFGS<double, Rosenbrock<double> > bfgs;
-            Swarm swarm(&testFunction, n, dim, bounds);
+            Swarm swarm(testFunction, n, dim, bounds);
 
             double bestF = swarm.bestVal();
             std::cout << "Starting at " << swarm.bestX() << std::endl;
@@ -292,37 +297,36 @@ int main(int argc, char* argv[]) {
                 swarm.dance();
                 if (bestF > swarm.bestVal())
                     bestF = swarm.bestVal();
-                std::cout << bestF << " ";
             }
-            std::cout << "On processor " << rank << " the swarm took us to " << swarm.bestX() << std::endl;
+            std::clog << "On processor " << rank << " the swarm took us to " << swarm.bestX() << std::endl;
             q.push(swarm.bestX());
 
             while (!q.empty()) {
                 auto guess = *q.pop();
-                bfgs.optimize(testFunction, guess, bounds);
+                bfgs.optimize(*testFunction, guess, bounds);
                 if (bfgs.isSuccess()) {
-                    std::cout << setiosflags(std::ios::fixed) << std::setprecision(6)
+                    std::clog << setiosflags(std::ios::fixed) << std::setprecision(6)
                               << "The optimal value is at " <<  bfgs.getOptValue()
                               << std::endl;
-                    std::cerr << "f(x) = " << testFunction(bfgs.getOptValue())
+                    std::clog << "f(x) = " << testFunction->operator()(bfgs.getOptValue())
                               << std::endl;
                 } else {
-                    std::cout << "************\nBFGS Failed!\n************"
+                    std::clog << "************\nBFGS Failed!\n************"
                               << std::endl;
-                    std::cout << "We started from\n"
+                    std::clog << "We started from\n"
                               << swarm.bestX()
                               << std::endl;
                 }
             }
 
-            std::cout << "We had " << swarm.numIterations() << " iterations of the swarm"
+            std::clog << "We had " << swarm.numIterations() << " iterations of the swarm"
                       << " and " << bfgs.numIterations() << " BFGS iterations"
                       << std::endl;
 
-            std::cout << "This is a total of " << testFunction.numCalls()
+            std::clog << "This is a total of " << testFunction->numCalls()
                       << " function calls" << std::endl;
 
-            auto val = testFunction(bfgs.getOptValue());
+            auto val = testFunction->operator()(bfgs.getOptValue());
             MPI::COMM_WORLD.Isend(&val, 1, MPI::DOUBLE, 0, 0);
             MPI::COMM_WORLD.Isend(&bfgs.getOptValue().front(), dim, MPI::DOUBLE, 0, DIE_TAG);
         }
@@ -342,7 +346,6 @@ int main(int argc, char* argv[]) {
                                        << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms"
                                        << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us"
                                        << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns";
-        redi::pstream rm("rm -rf tmp/");
     }
     return 0;
 }

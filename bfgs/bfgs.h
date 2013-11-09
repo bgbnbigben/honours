@@ -2,14 +2,15 @@
 #define BFGS_H
 
 #include <utilities/bound.h>
+#include <utilities/function.h>
 #include <bfgs/lbfgsb_prototypes.h>
 #include <cstring>
 
-template <typename T, typename F>
+template <typename T>
 class BFGS { 
     public:
 
-    void optimize(F&, std::vector<T>&, std::vector<Bound<T>> b, T decreaseFactor=1e1,
+    void optimize(Function<T>&, std::vector<T>&, std::vector<Bound<T>> b, T decreaseFactor=1e1,
                   T projectionTol=1e-5);
 
         std::vector<T> getOptValue() const;
@@ -28,8 +29,8 @@ class BFGS {
 
 /**
  */
-template <typename T, typename F>
-void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, std::vector<Bound<T>> bounds, T decreaseFactor, T projectionTol) {
+template <typename T>
+void BFGS<T>::optimize(Function<T> &func, std::vector<T> &x0, std::vector<Bound<T>> bounds, T decreaseFactor, T projectionTol) {
     //char task[60 + 1 + 1], csave[60 + 1 + 1];
     char task[60];
     char csave[60];
@@ -109,8 +110,8 @@ void BFGS<T, F>::optimize(F &func, std::vector<T> &x0, std::vector<Bound<T>> bou
 /**
  * Get the optimum point.
  */
-template <typename T, typename F>
-inline std::vector<T> BFGS<T, F>::getOptValue() const {
+template <typename T>
+inline std::vector<T> BFGS<T>::getOptValue() const {
     return xOpt_;
 }
 
@@ -118,8 +119,8 @@ inline std::vector<T> BFGS<T, F>::getOptValue() const {
 /**
  * Get the minimum value of objective function.
  */
-template <typename T, typename F>
-inline T BFGS<T, F>::getFuncMin() const {
+template <typename T>
+inline T BFGS<T>::getFuncMin() const {
     return fMin_;
 }
 
@@ -127,8 +128,8 @@ inline T BFGS<T, F>::getFuncMin() const {
 /**
  * Get the iteration number.
  */
-template <typename T, typename F>
-inline int BFGS<T, F>::numIterations() const {
+template <typename T>
+inline int BFGS<T>::numIterations() const {
     return iters_;
 }
 
