@@ -39,7 +39,7 @@ void BFGS<T>::optimize(Function<T> &func, std::vector<T> &x0, std::vector<Bound<
     for (int i = 5; i < 60; i++) task[i] = ' ';
 
     char lsave[4] = {0, 0, 0, 0};
-    int n = x0.size(), m = 5, iprint = 1; 
+    int n = x0.size(), m = 17, iprint = 1; 
     int isave[44];
 
     double *x = new double[n];
@@ -61,7 +61,6 @@ void BFGS<T>::optimize(Function<T> &func, std::vector<T> &x0, std::vector<Bound<
 
     double f, dsave[29];
     double *g = new double[n];
-    std::cout << 2*m*n+5*n+11*m*m+8*m << std::endl;
     double *wa = new double[2*m*n+5*n+11*m*m+8*m];
 
     while (true) {
@@ -93,7 +92,7 @@ void BFGS<T>::optimize(Function<T> &func, std::vector<T> &x0, std::vector<Bound<
                 success_ = true;
             else success_ = false;
             task[59] = 0;
-            std::cout << task << std::endl;
+            //std::cout << task << std::endl;
 
             delete[] x;
             delete[] nbd;
