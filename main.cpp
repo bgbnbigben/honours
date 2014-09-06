@@ -10,6 +10,7 @@
 #include <limits>
 #include <swarm/swarm.h>
 #include <swarm/neldermead.h>
+#include <utilities/RTreeUtilities.h>
 #include <utilities/function.h>
 #include <utilities/tsqueue.h>
 #include <utilities/vector_ops.h>
@@ -23,14 +24,17 @@
 
 #define BOUND_TAG 0x626f756e
 #define DIE_TAG 0xd1ed1e
-constexpr double NelderMead::alpha;
-constexpr double NelderMead::gamma;
 constexpr double NelderMead::rho;
 constexpr double NelderMead::sigma;
+constexpr double NelderMead::alpha;
+constexpr double NelderMead::gamma;
 
 int current_proc;
 int numprocs;
 
+void walltime(int param) {
+    std::cerr << "Exceeded walltime with param " << param << std::endl;
+}
 
 struct Arg : public option::Arg {
     static void printError(const char* msg1, const option::Option& opt, const char* msg2) {
@@ -139,37 +143,46 @@ void invalidInvocation() {
     exit(0);
 }
 
-void producePartitions(std::vector<Bound<double>> bounds, unsigned depth, unsigned requiredPartitions) {
-    if (depth == 1) 
+void determinePartitions(int size, int requiredPartitions, long long& actual_, int& n_, int& k_) {
+    n_ = std::exp(std::ceil(std::log(requiredPartitions)/size));
+    auto num = std::log(requiredPartitions) - size*std::log(n_), denom = std::log(n_ - 1) - std::log(n_);
+    k_ = std::floor((double)num/(double)denom);
+    actual_ = std::pow(n_ - 1, k_) * std::pow(n_, size - k_);
+}
+
+std::vector<std::vector<Bound<double>>> gBounds;
+
+void sendPartitions(std::vector<Bound<double>> bounds, int k, int n, int idx) {
+    if (idx == 0) 
         for (unsigned i = 0; i < bounds.size(); i++) {
             bounds[i].variable = i;
             bounds[i].type = Bound<double>::BOTH;
         }
-    if (requiredPartitions == 1) {
-        /* TODO wait for this to buffer */
-        MPI::Request req = MPI::COMM_WORLD.Isend(&bounds.front(), bounds.size()*sizeof(bounds[0]), MPI::CHAR, (current_proc++ % (numprocs - 1)) + 1, BOUND_TAG);
+    if (idx == bounds.size()) {
+        if (gBounds.size() > 20)
+            gBounds.erase(gBounds.begin(), gBounds.begin() + gBounds.size() - 15);
+        gBounds.push_back(bounds);
+        MPI::Request req = MPI::COMM_WORLD.Isend(&gBounds.back().front(), bounds.size()*sizeof(bounds[0]), MPI::CHAR, (current_proc++ % (numprocs - 1)) + 1, BOUND_TAG);
         return;
     }
-    assert(depth <= bounds.size());
-    int n; for (n = 2; n < 10000; n++) if (requiredPartitions - pow(std::pow(n, depth), (bounds.size() - (depth - 1))) <= 0) break;
-    int extraPartitions = requiredPartitions - n * (requiredPartitions / n);
-    requiredPartitions /= (n+extraPartitions);
-    for (int i = 0; i < n + extraPartitions; i++) {
+    for (int i = 0; i < (n + (idx >= k)); i++) {
         auto newBounds = bounds;
-        newBounds[depth-1].lower = bounds[depth-1].lower + (i) * (bounds[depth-1].upper - bounds[depth-1].lower) / (double)(n + extraPartitions);
-        newBounds[depth-1].upper = bounds[depth-1].lower + (i + 1)*(bounds[depth-1].upper - bounds[depth-1].lower) / (double)(n + extraPartitions);
-        producePartitions(newBounds, depth+1, requiredPartitions);
+        newBounds[idx].lower = bounds[idx].lower + (i) * (bounds[idx].upper - bounds[idx].lower) / (double)(n + (idx >= k));
+        newBounds[idx].upper = bounds[idx].lower + (i + 1)*(bounds[idx].upper - bounds[idx].lower) / (double)(n + (idx >= k));
+        sendPartitions(newBounds, k, n, idx+1);
     }
 }
 
 int main(int argc, char* argv[]) {
+try {
     auto start = std::chrono::high_resolution_clock::now();
+    signal(140, walltime);
     MPI::Init(argc, argv);
     char* end = 0;
     int rank;
     double left, right;
     int n, dim;
-    int partitions = 0;
+    long long partitions = 0;
     std::vector<Bound<double>> bounds;
 
     MPI::Status stat;
@@ -196,27 +209,24 @@ int main(int argc, char* argv[]) {
     BFGS<double> bfgs;
 
     if (options[SIF]) {
-        testFunction = new CUTEst<double>();
-        {
-            auto start = std::chrono::high_resolution_clock::now();
-            std::cout << "(1.2, -1) = " << testFunction->operator()({1.2, -1}) << " and (1, 1) = " << testFunction->operator()({1, 1}) << std::endl;
-            auto end = std::chrono::high_resolution_clock::now();
-            std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns";
-        }
-        dim = (reinterpret_cast<CUTEst<double>*>(testFunction))->getDim();
-        if (rank == 0) {
-            bounds.reserve(dim);
-            bounds.resize(dim);
-            auto lower = (reinterpret_cast<CUTEst<double>*>(testFunction))->getLowerBounds();
-            auto upper = (reinterpret_cast<CUTEst<double>*>(testFunction))->getUpperBounds();
-            for (int i = 0; i < dim; i++) {
-                bounds[i].lower = lower[i];
-                bounds[i].upper = upper[i];
-                std::cout << "Set x_" << i << " to " << lower[i] << " " << upper[i] << std::endl;
-            }
-        }
+        //testFunction = new CUTEst<double>();
+        //dim = (reinterpret_cast<CUTEst<double>*>(testFunction))->getDim();
+        //bounds.reserve(dim);
+        //bounds.resize(dim);
+        //if (rank == 0) {
+        //    auto lower = (reinterpret_cast<CUTEst<double>*>(testFunction))->getLowerBounds();
+        //    auto upper = (reinterpret_cast<CUTEst<double>*>(testFunction))->getUpperBounds();
+        //    for (int i = 0; i < dim; i++) {
+        //        std::cout << lower[i] << " <= x_" << i << " <= " << upper[i] << std::endl;
+        //        bounds[i].lower = lower[i];
+        //        bounds[i].upper = upper[i];
+        //        //bounds[i].variable = i;
+        //    }
+        //}
     } else {
         dim = strtol(options[DIM].arg, &end, 10);
+        bounds.reserve(dim);
+        bounds.resize(dim);
         if (rank == 0) {
             /* Divide up work, set bounds, etc. */
             left = strtod(options[BOUND].arg, &end);
@@ -224,8 +234,6 @@ int main(int argc, char* argv[]) {
             if (std::isinf(left)  || std::isnan(left) ||
                 std::isinf(right) || std::isnan(right))
                 invalidInvocation();
-            bounds.reserve(dim);
-            bounds.resize(dim);
             # pragma omp parallel for
                 for (int i = 0; i < dim; i++) {
                     bounds[i].lower = left;
@@ -242,32 +250,44 @@ int main(int argc, char* argv[]) {
     else
         partitions = strtol(options[PARTITIONS].arg, &end, 10);
 
-    if (rank != 0)
-        bounds.reserve(dim);
-        bounds.resize(dim);
+    std::clog << "Expected " << partitions << " partitions to be created" << std::endl;
 
     n = strtol(options[NUM].arg, &end, 10);
-    n = std::min(n, dim);
-    std::cout << "There will be " << n << "particles" << std::endl;
+    //n = std::min(n, dim);
+    std::clog << "There will be " << n << "particles" << std::endl;
 
     if (rank == 0) {
         current_proc = 1;
-        producePartitions(bounds, 1, partitions);
+        std::clog << "producing partitions" << std::endl;
+        int low, num;
+        determinePartitions(bounds.size(), partitions, partitions, low, num);
+        std::clog << "We have a total of " << partitions << " partitions and there are " << num << " of size " << low - 1 << std::endl;
+        sendPartitions(bounds, num, low - 1, 0);
         std::clog << "Pushed all bounds!" << std::endl;
+        assert(bounds.size() == dim);
+        gBounds.clear();
         # pragma omp parallel for
             for (int i = 1; i < numprocs; i++) {
-                MPI::COMM_WORLD.Send(&bounds.front(), dim*sizeof(bounds[0]), MPI::CHAR, i, DIE_TAG);
+                std::clog << "Sending DIE tag to " << i << std::endl;
+                MPI::COMM_WORLD.Isend(&bounds.front(), dim*sizeof(bounds[0]), MPI::CHAR, i, DIE_TAG);
             }
+        std::clog << "Sent die tags" << std::endl;
         int counter = 0;
+        unsigned fCalls = 0, gCalls = 0;
         double globalBest = std::numeric_limits<double>::max();
         std::vector<double> globalSoln(dim);
+        std::clog << "Waiting to receive " << partitions << " partitions" << std::endl;
         while (counter < partitions) {
+            std::clog << "Waiting for partition number " << counter + 1 << std::endl;
             MPI::Status stat;
             double candidateBest;
+            unsigned calls, grads;
             std::vector<double> candidateSoln(dim);
             std::clog << "Prepared to receive a best solution" << std::endl;
             MPI::COMM_WORLD.Recv(&candidateBest, 1, MPI::DOUBLE, MPI::ANY_SOURCE, MPI::ANY_TAG, stat);
             std::clog << "Received the candidate best from processor " << stat.Get_source() << std::endl;
+            MPI::COMM_WORLD.Recv(&calls, 1, MPI::UNSIGNED, stat.Get_source(), MPI::ANY_TAG);
+            MPI::COMM_WORLD.Recv(&grads, 1, MPI::UNSIGNED, stat.Get_source(), MPI::ANY_TAG);
             MPI::COMM_WORLD.Recv(&candidateSoln.front(), dim, MPI::DOUBLE, stat.Get_source(), MPI::ANY_TAG);
             std::clog << "Received the candidate solution " << candidateBest << " with an associated xval" << std::endl;
 
@@ -275,13 +295,17 @@ int main(int argc, char* argv[]) {
                 globalBest = candidateBest;
                 globalSoln = candidateSoln;
             }
+            fCalls += calls;
+            gCalls += grads;
             counter++;
         }
 
         std::cout << "\n\n\nThe best solution has f value " << globalBest << " and solution\n" << globalSoln << std::endl;
+        std::cout << "This is a total of " << fCalls << " function evaluations and " << gCalls << " gradient evaluations (if available)" << std::endl;
     } else {
         MPI::Status status;
         while (true) {
+            std::clog << "Processor " << rank << " is blocked" << std::endl;
             MPI::COMM_WORLD.Recv(&bounds.front(), dim*sizeof(Bound<double>), MPI::CHAR, 0, MPI::ANY_TAG, status); 
             std::clog << "Processor " << rank << " has received " << dim*sizeof(Bound<double>) << " bytes worth of bounds" << std::endl;
             if (status.Get_tag() == DIE_TAG) break;
@@ -290,19 +314,23 @@ int main(int argc, char* argv[]) {
             Swarm swarm(testFunction, n, dim, bounds);
 
             double bestF = swarm.bestVal();
-            std::cout << "Starting at " << swarm.bestX() << std::endl;
-            std::cout.unsetf ( std::ios::floatfield );
-            std::cout.precision(10);
+            std::clog.unsetf ( std::ios::floatfield );
+            std::clog.precision(10);
+            std::clog << "The bounds are: ";
+            for (unsigned i = 0; i < dim; i++)
+                std::clog << bounds[i].lower << " <= x_" << i << " <= " << bounds[i].upper << std::endl;
             while (!swarm.done()) {
                 swarm.dance();
                 if (bestF > swarm.bestVal())
                     bestF = swarm.bestVal();
             }
             std::clog << "On processor " << rank << " the swarm took us to " << swarm.bestX() << std::endl;
+
             q.push(swarm.bestX());
 
             while (!q.empty()) {
                 auto guess = *q.pop();
+                // TODO mesh search up in this bitch
                 bfgs.optimize(*testFunction, guess, bounds);
                 if (bfgs.isSuccess()) {
                     std::clog << setiosflags(std::ios::fixed) << std::setprecision(6)
@@ -327,7 +355,10 @@ int main(int argc, char* argv[]) {
                       << " function calls" << std::endl;
 
             auto val = testFunction->operator()(bfgs.getOptValue());
+            auto calls = testFunction->numCalls(), grads = testFunction->numGrads();
             MPI::COMM_WORLD.Isend(&val, 1, MPI::DOUBLE, 0, 0);
+            MPI::COMM_WORLD.Isend(&calls, 1, MPI::UNSIGNED, 0, 0);
+            MPI::COMM_WORLD.Isend(&grads, 1, MPI::UNSIGNED, 0, 0);
             MPI::COMM_WORLD.Isend(&bfgs.getOptValue().front(), dim, MPI::DOUBLE, 0, DIE_TAG);
         }
     }
@@ -348,4 +379,8 @@ int main(int argc, char* argv[]) {
                                        << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns";
     }
     return 0;
+} catch (Tools::IllegalArgumentException& e) {
+    std::cerr << e.what() << std::endl;
+    return -1;
+}
 }
