@@ -4,17 +4,18 @@
 #include <utilities/bound.h>
 
 class Particle {
-        std::vector<double> position_;
         std::vector<double> velocity_;
         std::vector<double> bestPosition_;
-        double leftWindow_;
-        double rightWindow_;
-
         double cost_;
 
+        double getRandomInWindow_(int i);
+
     public:
-        Particle(double, double, int);
-        void step(const std::vector<double>&, double, double, double, const std::vector<Bound<double>>&);
+        std::vector<double> position_;
+        std::vector<Bound<double>> bounds_;
+        Particle(const std::vector<Bound<double>>&, int);
+        void step(const std::vector<double>&, double, double, double);
+        void clamp();
         double& operator[](int i);
         inline void setVal(double cost) { 
             if (cost < this->cost_) 

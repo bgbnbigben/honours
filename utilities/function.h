@@ -91,6 +91,7 @@ class Rosenbrock : public Function<T> {
                 if (i > 0)
                     df2[i] += 200.0 * (x[i] - x[i-1]*x[i-1]);
             }
+            return df2;
             std::cout << norm(df - df2) << std::endl;
             assert(norm(df - df2) <= 1);
             return df;

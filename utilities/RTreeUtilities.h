@@ -1,6 +1,8 @@
 #ifndef __RTREE_UTILITIES_H__
 #define __RTREE_UTILITIES_H__
 
+#include <spatialindex/SpatialIndex.h>
+
 class IntersectingVisitor : public SpatialIndex::IVisitor {
     private: 
         uint64_t intersections_;
