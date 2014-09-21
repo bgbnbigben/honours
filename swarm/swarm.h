@@ -4,12 +4,15 @@
 #include <numeric>
 #include <utilities/function.h>
 #include <utilities/bound.h>
+#include <utilities/Variable.h>
 #include <spatialindex/SpatialIndex.h>
 
+template <typename T>
 class Particle;
 
+template <typename T>
 class Swarm {
-        Function<double>* f_;
+        Function<T>* f_;
         unsigned number_;
         int dimension_;
         SpatialIndex::IStorageManager* memoryStorage_;
@@ -18,21 +21,19 @@ class Swarm {
         bool done_;
         int same_;
         unsigned iterations_;
-        std::vector<Bound<double>> bounds_;
+        std::vector<VariableContainer> bounds_;
 
     public:
-        std::vector<Particle*> particles_;
+        std::vector<Particle<T>*> particles_;
     private:
 
         void setBests_();
 
     public:
-        Swarm(Function<double>*, int, int, std::vector<Bound<double>>);
+        Swarm(Function<T>*, int, int, std::vector<VariableContainer>);
         ~Swarm();
 
-        void dance();
-        double bestVal();
-        const std::vector<double>& bestX();
+        void dance(); T bestVal(); const std::vector<double>& bestX();
         bool done() const { return this->done_; }
 
         int numIterations() const { return this->iterations_; }
