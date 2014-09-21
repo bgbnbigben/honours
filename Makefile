@@ -6,7 +6,7 @@ SWARMSRC=swarm/swarm.cpp swarm/particle.cpp swarm/neldermead.cpp
 BFGSSRC=bfgs/bfgs.h bfgs/linesearch.h # bfgs_test.cpp
 UTILITYSRC=utilities/RTree.h utilities/rrect.h utilities/function.h utilities/tsqueue.h utilities/matrix.h utilities/vector_ops.h
 PCH=utilities/vector_ops.h.gch utilities/matrix.h.gch utilities/tsqueue.h.gch utilities/RTreeUtilities.h.gch
-SRC=${SWARMSRC} main.cpp
+SRC=${SWARMSRC} main.cpp DTRegion.cc DTPoint.cc
 F=utilities/dgemm.o utilities/dgemv.o utilities/dger.o utilities/dgetf2.o utilities/dgetrf.o utilities/dgetri.o utilities/dlamch.o utilities/dlaswp.o utilities/dswap.o utilities/dtrmm.o utilities/dtrmv.o utilities/dtrsm.o utilities/dtrti2.o utilities/dtrtri.o utilities/idamax.o utilities/ieeeck.o utilities/ilaenv.o utilities/iparmq.o utilities/lsame.o utilities/xerbla.o
 OBJS=${SRC:.cpp=.o} ${F} tmp/ELFUN.o tmp/EXTER.o tmp/GROUP.o tmp/RANGE.o
 EXE=particle
@@ -15,11 +15,12 @@ LDFLAGS=-O3 -fopenmp -L${CUTEST}/objects/pc64.lnx.gfo/double -Llbfgsb -Lspatiali
 
 .PHONY: all fortran libspatialindex clean fullclean archive interface
 
-all: tmp interface fortran libspatialindex ${OBJS} ${PCH}
+MPI_LINK=$(shell $MPICC --showme:link)
+all: interface fortran libspatialindex ${OBJS} ${PCH}
 	$(MPICC) ${OBJS} -o ${EXE} ${LDFLAGS} -lcutest
 
-tmp: 
-	$(MAKE) -c tmp
+mesh_search:
+	$(CC) -g -I. -std=c++11 mesh-search.cpp -o mesh_search
 
 libspatialindex: fortran ${TLD}/spatialindex/lib/libspatialindex.a
 

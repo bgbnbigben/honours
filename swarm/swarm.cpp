@@ -11,8 +11,11 @@
 const double hyperrect_size = 0.5;
 
 namespace {
-    bool compare(Particle* a, Particle* b) { return a->getVal() < b->getVal();}
-    bool inBounds(Particle* p) {
+    template <typename T>
+    bool compare(Particle<T>* a, Particle<T>* b) { return a->getVal() < b->getVal();}
+
+    template <typename T>
+    bool inBounds(Particle<T>* p) {
         bool inBounds = true;
         for (unsigned i = 0; i < p->bounds_.size(); i++)
             inBounds = inBounds && p->bounds_[i].lower <= p->position_[i] && p->position_[i] <= p->bounds_[i].upper;
@@ -20,7 +23,8 @@ namespace {
     }
 };
 
-Swarm::Swarm(Function<double>* f, int n, int dim, std::vector<Bound<double>> bounds) : f_(f), number_(n), dimension_(dim), done_(false), same_(0), iterations_(0) {
+template <typename T>
+Swarm<T>::Swarm(Function<T>* f, int n, int dim, std::vector<VariableContainer> bounds) : f_(f), number_(n), dimension_(dim), done_(false), same_(0), iterations_(0) {
     // I probably will regret this.
     auto name = std::string("temp" + std::to_string(rand()));
     auto pageSize = sysconf(_SC_PAGESIZE);
@@ -37,24 +41,27 @@ Swarm::Swarm(Function<double>* f, int n, int dim, std::vector<Bound<double>> bou
     {
         # pragma omp for
         for (int i = 0; i < this->particles_.size(); i++) {
-            this->particles_[i] = new Particle(bounds, dim);
+            this->particles_[i] = new Particle<T>(bounds, dim);
         }
     }
     this->setBests_();
 }
 
-Swarm::~Swarm() {
+template <typename T>
+Swarm<T>::~Swarm() {
     delete this->rtree_;
     delete this->memoryBuffer_;
     delete this->memoryStorage_;
 }
 
-void Swarm::setBests_() {
-    double best = this->particles_[0]->getVal();
-    std::vector<double> velocity(this->dimension_);
+template <typename T>
+void Swarm<T>::setBests_() {
+    T best = this->particles_[0]->getVal();
+    std::vector<Variable> velocity(this->dimension_);
     std::for_each(this->particles_.begin(), this->particles_.end(),
-        [this, &velocity] (Particle* p) {
+        [this, &velocity] (Particle<T>* p) {
             p->setVal((* this->f_)(p->pos()));
+            /* TODO use the DTRegion
             SpatialIndex::Region r;
             if (this->dimension_ == 1) {
                 double lower[] = {(p->pos() - hyperrect_size)[0], 0};
@@ -63,30 +70,33 @@ void Swarm::setBests_() {
             }
             else
                 r = SpatialIndex::Region(reinterpret_cast<const double*>(&(p->pos() - hyperrect_size)[0]), reinterpret_cast<const double*>(&(p->pos() + hyperrect_size)[0]), this->dimension_);
-            velocity += p->vel();
             // We don't care to associate any data with this region
             this->rtree_->insertData(0, 0, r, 0);
+            */
+            velocity += p->vel();
     });
     std::sort(this->particles_.begin(), this->particles_.end(), ::compare);
     if (this->particles_[0]->getVal() > best)
         this->same_++;
     if (this->same_ > 100)
         this->done_ = true;
-    if (norm(velocity) < 1.0)
-        this->done_ = true;
+    // TODO use something meaningful for type VariableContainer
+    //if (norm(velocity) < 1.0)
+    //    this->done_ = true;
     if (this->iterations_ >= 1000)
         this->done_ = true;
 
 }
 
-void Swarm::dance() {
+template <typename T>
+void Swarm<T>::dance() {
     this->iterations_++;
     auto best = this->bestX();
     std::vector<double> centre(this->dimension_);
     # pragma omp parallel
     {
         std::for_each(this->particles_.begin(), this->particles_.end(),
-          [&] (Particle*& i) {
+          [&] (Particle<T>*& i) {
             i->step(best, this->c1, this->c2, this->momentum);
             centre += i->pos();
             IntersectingVisitor v;
@@ -124,10 +134,12 @@ void Swarm::dance() {
     }
 }
 
-double Swarm::bestVal() {
+template <typename T>
+T Swarm<T>::bestVal() {
     return this->particles_[0]->getVal();
 }
 
-const std::vector<double>& Swarm::bestX() {
+template <typename T>
+const std::vector<double>& Swarm<T>::bestX() {
     return this->particles_[0]->pos();
 }

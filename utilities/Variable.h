@@ -19,6 +19,8 @@ class Variable {
 
         Variable() : _type(VariableType::Continuous) {_val.d = 0.5;}
 
+        void setType(const VariableType& vt) { _type = vt; }
+        VariableType getType() { return _type; }
         void val(double v) {
             if (_type == VariableType::Discrete) 
                 throw new std::invalid_argument("Can't call with double");
@@ -40,14 +42,12 @@ class Variable {
         }
 };
 
-class VariableContainer : protected Variable {
+class VariableContainer : public Variable {
     public:
         VariableValue rangeStart;
         VariableValue rangeEnd;
-        VariableContainer() : _type(VariableType::Continuous) {rangeStart.d = 0.0, rangeEnd.d = 1.0, _val.d = 0.5;}
+        VariableContainer() { _type = VariableType::Continuous, rangeStart.d = 0.0, rangeEnd.d = 1.0, _val.d = 0.5;}
 
-        void setType(const VariableType& vt) { _type = vt; }
-        VariableType getType() { return _type; }
 };
 
 #endif // __VARIABLE_H__

@@ -3,30 +3,31 @@
 #include <vector>
 #include <utilities/bound.h>
 
+template <typename T>
 class Particle {
-        std::vector<double> velocity_;
-        std::vector<double> bestPosition_;
-        double cost_;
+        std::vector<Variable> velocity_;
+        std::vector<Variable> bestPosition_;
+        T cost_;
 
-        double getRandomInWindow_(int i);
+        VariableType getRandomInWindow_(int i);
 
     public:
-        std::vector<double> position_;
-        std::vector<Bound<double>> bounds_;
-        Particle(const std::vector<Bound<double>>&, int);
-        void step(const std::vector<double>&, double, double, double);
+        // TODO wrap these into the one.
+        std::vector<VariableContainer> position_;
+        Particle(const std::vector<VariableContainer>&, int);
+        void step(const std::vector<Variable>&, double, double, double);
         void clamp();
-        double& operator[](int i);
-        inline void setVal(double cost) { 
+        Variable operator[](int i);
+        inline void setVal(T cost) { 
             if (cost < this->cost_) 
                 this->bestPosition_ = this->position_;
             this->cost_ = cost;
         }
-        inline double getVal() const { return this->cost_; }
-        inline const std::vector<double>& pos() { return this->position_; }
-        inline const std::vector<double>& vel() { return this->velocity_; }
+        inline T getVal() const { return this->cost_; }
+        inline const std::vector<Variable>& pos() { return this->position_; }
+        inline const std::vector<Variable>& vel() { return this->velocity_; }
         static constexpr double mutation_prob = 0.05;
-        void reload(const std::vector<double>&, const std::vector<double>&);
+        void reload(const std::vector<Variable>&, const std::vector<Variable>&);
 };
 
 #endif
