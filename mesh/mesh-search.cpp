@@ -3,15 +3,19 @@
 #include <algorithm>
 #include <functional>
 #include <utilities/Variable.h>
+#include <utilities/function.h>
 
 const double EPS = 1e-10;
 
 
 //class Function;
 
-class Problem {
+template <typename T>
+class MeshSearch {
     private:
         std::vector<Variable> _meshCentre;
+        std::vector<Variable> _newCentre;
+        T _bestF;
         int _constrictions;
         struct window {
             VariableValue left;
@@ -19,25 +23,26 @@ class Problem {
         };
 
     protected:
-        std::vector<Variable> _variables;
+        std::vector<VariableContainer> _variables;
         double _constrictFactor;
         double _lengthTolerance;
         double _sideWidth;
 
     public:
 
-        //Function* f;
-
-        Problem(std::vector<VariableContainer>& v, double constrictionFactor, double sideWidth, double length) : _variables(v), _constrictFactor(constrictionFactor), _constrictions(0), _sideWidth(sideWidth), _lengthTolerance(length) {
+        MeshSearch(Function<T>& f, std::vector<VariableContainer>& v, double constrictionFactor, double sideWidth, double length) : _variables(v), _constrictFactor(constrictionFactor), _constrictions(0), _sideWidth(sideWidth), _lengthTolerance(length) {
             _meshCentre.resize(_variables.size());
-            for (int i = 0; i < _variables.size(); i++)
-                if (_variables[i].type == VariableType::Discrete) 
+            for (int i = 0; i < _variables.size(); i++) {
+                if (_variables[i].getType() == VariableType::Discrete)  {
+                    _meshCentre[i].setType(VariableType::Discrete);
                     _meshCentre[i].val((long long)_variables[i]);
-                else
-                    _meshCentre[i].val(_variables[i]);
+                } else
+                    _meshCentre[i].val((double)_variables[i]);
+            }
+            _newCentre(_meshCentre);
         };
 
-        void drive() {
+        void search() {
             VariableValue left, right;
             std::vector<VariableValue> currentPoint(_meshCentre.size());
             std::vector<double> carry(_variables.size());
@@ -51,7 +56,7 @@ class Problem {
              * anything else
              */
             auto nodesInRow = [&] (int i) {
-                return (_variables[i].type == VariableType::Discrete ?
+                return (_variables[i].getType() == VariableType::Discrete ?
                             std::min(nodesPerRow,
                                 _variables[i].rangeEnd.ll - _variables[i].rangeStart.ll + 1ll) :
                             nodesPerRow);
@@ -59,17 +64,17 @@ class Problem {
             auto getWindowForVariable = [&] (int idx) {
                 nodesInCurrentRow = nodesInRow(idx);
                 window w;
-                if (_variables[idx].type == VariableType::Continuous) {
+                if (_variables[idx].getType() == VariableType::Continuous) {
                     w.left.d = std::max(_variables[idx].rangeStart.d, (double)_meshCentre[idx] - _sideWidth/2.0);
                     w.right.d = std::min(_variables[idx].rangeEnd.d, (double)_meshCentre[idx] + _sideWidth/2.0);
-                } else if (_variables[idx].type == VariableType::Discrete) {
+                } else if (_variables[idx].getType() == VariableType::Discrete) {
                     w.left.ll = std::max(_variables[idx].rangeStart.ll, (long long)_meshCentre[idx] - nodesInCurrentRow / 2);
                     w.right.ll = std::min(_variables[idx].rangeEnd.ll, (long long)_meshCentre[idx] + nodesInCurrentRow / 2);
                 }
                 return w;
             };
             auto incrementVariable = [&](int i) {
-                if (_variables[i].type == VariableType::Discrete) {
+                if (_variables[i].getType() == VariableType::Discrete) {
                     currentPoint[i].ll += (long long)((windows[i].right.ll - windows[i].left.ll) / (double) (nodesInCurrentRow - 1));
                     // For discrete vars, add with carry to deal with possible
                     // windows-size problems (right - left > numNodes).
@@ -90,7 +95,7 @@ class Problem {
                 }
             };
 
-            for (int z = 0; z < 3; z++, _constrictions++) {
+            for (; ; _constrictions++) {
                 std::fill(carry.begin(), carry.end(), 0.0);
                 nodesPerRow = pow((1/_constrictFactor), _constrictions) + 1;
                 numNodes = 1;
@@ -109,9 +114,10 @@ class Problem {
                 nodesInCurrentRow = nodesInRow(0);
                 incrementVariable(0);
 
-                if (currentPoint[0] - _ <= _lengthTolerance) return;
+                // TODO Fix this later
+                //if (currentPoint[0] - _ <= _lengthTolerance) return;
 
-                if (_variables[0].type == VariableType::Continuous)
+                if (_variables[0].getType() == VariableType::Continuous)
                     currentPoint[0].d = _.d - (currentPoint[0].d - _.d);
                 else
                     currentPoint[0].ll = _.ll - (currentPoint[0].ll - _.ll);
@@ -122,8 +128,8 @@ class Problem {
                     for (int j = 0; j < _variables.size(); j++) {
                         //nodesInCurrentRow = nodesInRow(j); 
                         // TODO hack
-                        if ((_variables[j].type == VariableType::Continuous && currentPoint[j].d > windows[j].right.d) ||
-                            (_variables[j].type == VariableType::Discrete && currentPoint[j].ll > windows[j].right.ll)) {
+                        if ((_variables[j].getType() == VariableType::Continuous && currentPoint[j].d > windows[j].right.d) ||
+                            (_variables[j].getType() == VariableType::Discrete && currentPoint[j].ll > windows[j].right.ll)) {
                             currentPoint[j] = windows[j].left;
                             if (j < _variables.size() - 1) {
                                 nodesInCurrentRow = nodesInRow(j+1);
@@ -134,12 +140,15 @@ class Problem {
 
                     std::cout << "(";
                     for (int j = 0; j < _variables.size(); j++)
-                        std::cout << (_variables[j].type == VariableType::Discrete ? currentPoint[j].ll : currentPoint[j].d) << (j == _variables.size() - 1 ? "" : ",\t\t");
+                        std::cout << (_variables[j].getType() == VariableType::Discrete ? currentPoint[j].ll : currentPoint[j].d) << (j == _variables.size() - 1 ? "" : ",\t\t");
                     std::cout << ")\n";
                 }
 
             }
         }
+
+        std::vector<VariableContainer> getOptPoint() const;
+        T getFuncMin() const;
 
 };
 
@@ -154,8 +163,9 @@ int main() {
     variables[2].rangeEnd.ll = 10;
     variables[2].val(5ll);
 
-    Problem problem(variables, .5, .5, .01);
+    Function<double>* f = new Rosenbrock<double>();
+    MeshSearch<double> problem(*f, variables, .5, .5, .01);
 
-    problem.drive();
+    problem.search();
     return 0;
 }
