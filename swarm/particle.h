@@ -1,7 +1,8 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 #include <vector>
-#include <utilities/bound.h>
+//#include <utilities/bound.h>
+#include <utilities/Variable.h>
 
 template <typename T>
 class Particle {

@@ -18,7 +18,7 @@ namespace {
 }
 
 template <typename T>
-Particle::Particle(const std::vector<VariableContainer>& position, int dim) : 
+Particle<T>::Particle(const std::vector<VariableContainer>& position, int dim) : 
         position_(position) {
     assert(position.size() == dim);
     this->velocity_.resize(dim);
@@ -37,12 +37,14 @@ Particle::Particle(const std::vector<VariableContainer>& position, int dim) :
     this->clamp();
 }
 
-Variable& Particle::operator[] (int i) {
+template <typename T>
+Variable Particle<T>::operator[] (int i) {
     return this->position_[i];
 }
 
 /* TODO: make it clamp to window or re-init or something */
-void Particle::step(const std::vector<Variable>& direction, double c1, double c2, double momentum) {
+template <typename T>
+void Particle<T>::step(const std::vector<Variable>& direction, double c1, double c2, double momentum) {
     # pragma omp single
     {
         this->velocity_ = momentum * (this->velocity_ +
@@ -53,26 +55,34 @@ void Particle::step(const std::vector<Variable>& direction, double c1, double c2
     this->clamp();
 }
 
-void Particle::clamp() {
+template <typename T>
+void Particle<T>::clamp() {
     # pragma omp parallel
     {
         std::for_each(this->position_.begin(), this->position_.end(),
             [&] (VariableContainer& pos) {
-                    // TODO make sure it's not fucking up and calling the wrong
-                    // cast operator. It probably always uses double.
-                    pos.val(std::max(pos.rangeStart, pos));
-                    pos.val(std::min(pos.rangeEnd, pos));
+                    if (pos.type() == VariableType::Continuous) {
+                        pos.val(std::max((double)pos.rangeStart, (double)pos));
+                        pos.val(std::min((double)pos.rangeEnd, (double)pos));
+                    } else {
+                        pos.val(std::max((long long)pos.rangeStart, (long long)pos));
+                        pos.val(std::min((long long)pos.rangeEnd, (long long)pos));
+                        // Also force it to be at an integer point
+                        pos.val((long long)((double)((long long)pos) + .5));
+                    }
             });
     }
 }
 
-void Particle::reload(const std::vector<Variable>& p, const std::vector<Variable>& v) {
+template <typename T>
+void Particle<T>::reload(const std::vector<Variable>& p, const std::vector<Variable>& v) {
     this->velocity_ = v;
     this->position_ = p;
     this->clamp();
 }
 
-VariableType Particle::getRandomInWindow_(int i) {
+template <typename T>
+VariableType Particle<T>::getRandomInWindow_(int i) {
     if (this->position_[i].getType == VariableType::Continuous)
         return ::getRandom() * (this->position_[i].rangeEnd.d - this->position_[i].rangeStart.d)
             + this->position_[i].rangeStart.d;

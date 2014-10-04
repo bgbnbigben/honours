@@ -20,7 +20,7 @@ class Variable {
         Variable() : _type(VariableType::Continuous) {_val.d = 0.5;}
 
         void setType(const VariableType& vt) { _type = vt; }
-        VariableType getType() { return _type; }
+        VariableType type() { return _type; }
         void val(double v) {
             if (_type == VariableType::Discrete) 
                 throw new std::invalid_argument("Can't call with double");

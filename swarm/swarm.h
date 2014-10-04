@@ -33,7 +33,9 @@ class Swarm {
         Swarm(Function<T>*, int, int, std::vector<VariableContainer>);
         ~Swarm();
 
-        void dance(); T bestVal(); const std::vector<double>& bestX();
+        void dance();
+        T bestVal();
+        const std::vector<double>& bestX();
         bool done() const { return this->done_; }
 
         int numIterations() const { return this->iterations_; }
